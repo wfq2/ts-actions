@@ -1,4 +1,5 @@
 import { Step } from "./step.js";
+import type { StepActionType } from "./step.js";
 import type { JobDefaults, JobEnv, JobOutputs, Job as JobType, Runner } from "./types.js";
 
 export class Job {
@@ -26,11 +27,14 @@ export class Job {
     return this;
   }
 
+  addStep(step: Step): this;
+  addStep<TAction extends StepActionType>(step: (step: Step) => Step<TAction>): this;
+  addStep(steps: Array<Step | ((step: Step) => Step<StepActionType>)>): this;
   addStep(
     step:
       | Step
-      | ((step: Step) => Step<string | null>)
-      | Array<Step | ((step: Step) => Step<string | null>)>
+      | ((step: Step) => Step<StepActionType>)
+      | Array<Step | ((step: Step) => Step<StepActionType>)>
   ): this {
     if (Array.isArray(step)) {
       for (const s of step) {

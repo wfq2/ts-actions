@@ -25,7 +25,26 @@ type ValidActionInputsRegistry = IsAny<ActionInputsRegistry> extends true
       : ActionInputsRegistry // Valid registry
     : never; // Not a record type
 
-export class Step<TAction extends string | null = null> {
+/**
+ * Type representing a reusable action step (uses an action reference)
+ * This represents an action reference (e.g., "actions/checkout@v4")
+ */
+declare const __actionReferenceBrand: unique symbol;
+export type ActionReference = string & { readonly [__actionReferenceBrand]: true };
+
+/**
+ * Type representing a self-defined script step (uses run)
+ * This represents a script step that runs custom commands
+ */
+declare const __scriptStepBrand: unique symbol;
+export type ScriptStep = { readonly [__scriptStepBrand]: true };
+
+/**
+ * Union type representing the two possible step action types
+ */
+export type StepActionType = ActionReference | ScriptStep;
+
+export class Step<TAction extends StepActionType = ScriptStep> {
   private step: StepType;
   private currentActionRef: string | null = null;
 
@@ -45,7 +64,7 @@ export class Step<TAction extends string | null = null> {
 
   uses<TActionClass extends ActionClassType>(
     action: TActionClass
-  ): Step<TActionClass["reference"]> {
+  ): [TAction] extends [ScriptStep] ? Step<TActionClass["reference"] & ActionReference> : never {
     // Access the reference property from the class constructor or instance
     // This works for both static classes (with static/constructor reference) and instances
     const actionRef = (action as { reference: string }).reference;
@@ -53,25 +72,36 @@ export class Step<TAction extends string | null = null> {
     this.currentActionRef = actionRef;
     // Clear run property since a step cannot have both uses and run
     this.step.run = undefined;
-    return this as unknown as Step<TActionClass["reference"]>;
+    // Type assertion: when TAction is ScriptStep, return Step<TActionClass["reference"]>, otherwise never
+    return this as unknown as [TAction] extends [ScriptStep]
+      ? Step<TActionClass["reference"] & ActionReference>
+      : never;
   }
 
-  run(command: string): Step<null> {
+  run(
+    ...args: [TAction] extends [ScriptStep] ? [string] : never
+  ): [TAction] extends [ScriptStep] ? Step<ScriptStep> : never {
+    const [command] = args;
     this.step.run = command;
     this.currentActionRef = null; // Clear action ref when using run
     // Clear uses and with properties since a step cannot have both uses and run
     this.step.uses = undefined;
     this.step.with = undefined;
-    return this as Step<null>;
+    // Type assertion: when TAction is ScriptStep, return Step<ScriptStep>, otherwise never
+    return this as unknown as [TAction] extends [ScriptStep] ? Step<ScriptStep> : never;
   }
 
   with(
     inputs: [ValidActionInputsRegistry] extends [never]
       ? { __error: "ActionInputsRegistry is missing. Run: ts-actions import <action>" }
-      : TAction extends keyof ActionInputsRegistry
-        ? ActionInputs<TAction>
+      : TAction extends ActionReference
+        ? TAction extends keyof ActionInputsRegistry
+          ? ActionInputs<TAction>
+          : {
+              __error: `Action "${TAction}" is not imported. Run: ts-actions import ${TAction}`;
+            }
         : {
-            __error: `Action "${TAction & string}" is not imported. Run: ts-actions import ${TAction & string}`;
+            __error: "Cannot use 'with' on a script step. Use 'with' only with action steps (uses).";
           }
   ): this {
     // Validate inputs against imported action if available
