@@ -26,8 +26,22 @@ export class Job {
     return this;
   }
 
-  addStep(step: Step | ((step: Step) => Step<string | null>)): this {
-    if (step instanceof Step) {
+  addStep(
+    step:
+      | Step
+      | ((step: Step) => Step<string | null>)
+      | Array<Step | ((step: Step) => Step<string | null>)>
+  ): this {
+    if (Array.isArray(step)) {
+      for (const s of step) {
+        if (s instanceof Step) {
+          this.job.steps.push(s.toJSON());
+        } else {
+          const stepInstance = new Step();
+          this.job.steps.push(s(stepInstance).toJSON());
+        }
+      }
+    } else if (step instanceof Step) {
       this.job.steps.push(step.toJSON());
     } else {
       const stepInstance = new Step();

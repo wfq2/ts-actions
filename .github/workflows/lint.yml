@@ -10,10 +10,14 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
+      - name: Install dependencies
+        run: npm ci
       - name: Run linting
         run: npm run check
