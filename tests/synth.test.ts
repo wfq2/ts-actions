@@ -6,6 +6,7 @@ import { ActionsSetupNode4 } from "../.ts-actions/imports/index.js";
 import { Step } from "../src/core/step.js";
 import { Workflow } from "../src/core/workflow.js";
 import { synthesize } from "../src/synth/yaml.js";
+import { arrayStepsWorkflow } from "./workflows/array-steps.js";
 import { invalidStep } from "./workflows/invalid-step.js";
 import { nodeTestWorkflow } from "./workflows/node-test.js";
 import { simpleCIWorkflow } from "./workflows/simple-ci.js";
@@ -152,4 +153,40 @@ test("step with both uses and run set directly should throw error in toJSON", ()
     },
     "Should throw error when step has both uses and run set directly"
   );
+});
+
+test("combine array of steps into a job", () => {
+  synthesize(arrayStepsWorkflow, TEST_OUTPUT_DIR);
+
+  const expectedFile = join(TEST_OUTPUT_DIR, "array-steps-test.yml");
+  ok(existsSync(expectedFile), "Output file should exist");
+
+  const yamlContent = readFileSync(expectedFile, "utf-8");
+
+  // Assert key components of the YAML
+  ok(yamlContent.includes("name: Array Steps Test"), "Should contain workflow name");
+  ok(yamlContent.includes("on:"), "Should contain 'on' trigger");
+  ok(yamlContent.includes("push:"), "Should contain push trigger");
+  ok(yamlContent.includes("branches:"), "Should contain branches");
+  ok(yamlContent.includes("- main"), "Should contain main branch");
+  ok(yamlContent.includes("jobs:"), "Should contain jobs");
+  ok(yamlContent.includes("build:"), "Should contain build job");
+  ok(yamlContent.includes("runs-on: ubuntu-latest"), "Should contain runs-on");
+
+  // Verify all steps from the array are present
+  ok(yamlContent.includes("Checkout code"), "Should contain checkout step name");
+  ok(yamlContent.includes("actions/checkout@v4"), "Should contain checkout action");
+  ok(yamlContent.includes("Setup Node.js"), "Should contain setup node step name");
+  ok(yamlContent.includes("actions/setup-node@v4"), "Should contain setup-node action");
+  ok(yamlContent.includes("node-version"), "Should contain node-version input");
+  ok(
+    yamlContent.includes('"18"') || yamlContent.includes("'18'") || yamlContent.includes("18"),
+    "Should contain node version 18"
+  );
+  ok(yamlContent.includes("Install dependencies"), "Should contain install dependencies step name");
+  ok(yamlContent.includes("npm ci"), "Should contain npm ci command");
+  ok(yamlContent.includes("Build project"), "Should contain build project step name");
+  ok(yamlContent.includes("npm run build"), "Should contain npm run build command");
+  ok(yamlContent.includes("Run tests"), "Should contain test step name");
+  ok(yamlContent.includes("npm test"), "Should contain npm test command");
 });
