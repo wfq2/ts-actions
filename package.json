@@ -1,0 +1,33 @@
+{
+  "name": "ts-actions",
+  "version": "1.0.0",
+  "description": "TypeScript library for programmatically creating GitHub Actions workflows",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "ts-actions": "./bin/ts-actions"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "synth": "tsx src/cli/synth.ts",
+    "test": "tsx tests/synth.test.ts"
+  },
+  "keywords": ["github-actions", "workflows", "typescript", "cdk"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

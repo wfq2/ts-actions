@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+## Development Rules
+
+- Always make sure linting succeeds
+```
+npm run check
+```
+
+- Always make sure tests succeed (Do not modify tests without direct instruction to do so)
+```
+npm run test
+```
+
+- Add tests into the tests/ directory
