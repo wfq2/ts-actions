@@ -1,0 +1,20 @@
+{
+  "actions": [
+    {
+      "owner": "actions",
+      "repo": "setup-node",
+      "version": "v4",
+      "full": "actions/setup-node@v4",
+      "typeName": "ActionsSetupNode4",
+      "importedAt": "2025-11-29T18:53:21.618Z"
+    },
+    {
+      "owner": "actions",
+      "repo": "checkout",
+      "version": "v4",
+      "full": "actions/checkout@v4",
+      "typeName": "ActionsCheckout4",
+      "importedAt": "2025-11-29T18:52:20.426Z"
+    }
+  ]
+}
