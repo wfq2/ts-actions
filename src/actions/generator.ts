@@ -83,7 +83,11 @@ function mapInputTypeToTypeScript(input: ActionInput): string {
 /**
  * Generate complete TypeScript type definition file for an action
  */
-export function generateTypeDefinition(metadata: ActionMetadata, actionName: string): string {
+export function generateTypeDefinition(
+  metadata: ActionMetadata,
+  actionName: string,
+  actionReference: string
+): string {
   const inputType = generateInputType(metadata);
   const outputType = generateOutputType(metadata);
 
@@ -102,6 +106,42 @@ export interface ${actionName}Metadata {
   inputs: ${actionName}Inputs;
   outputs: ${actionName}Outputs;
 }
+
+/**
+ * Action class for ${actionReference}
+ * 
+ * This class represents the imported action and provides type-safe access
+ * to the action reference string.
+ * 
+ * This is a static class - use the class directly, no instantiation needed.
+ * Example: step.uses(${actionName})
+ */
+class ${actionName}Impl {
+  /**
+   * The action reference string (e.g., "actions/checkout@v4")
+   * This is a static property - access it via the class: ${actionName}.reference
+   */
+  static readonly reference: string = "${actionReference}";
+  
+  /**
+   * Private constructor to prevent instantiation
+   * Use the class directly as a static reference
+   */
+  private constructor() {}
+}
+
+// Export the class with the reference property on the constructor
+// This allows TypeScript to recognize the reference property on the class itself
+// Use 'as const' assertion to preserve the literal type of the reference string
+export const ${actionName} = ${actionName}Impl as typeof ${actionName}Impl & { readonly reference: "${actionReference}" };
+
+// Add reference property to the exported class for runtime access
+Object.defineProperty(${actionName}, "reference", {
+  value: "${actionReference}",
+  writable: false,
+  enumerable: true,
+  configurable: false,
+});
 `;
 }
 

@@ -26,7 +26,7 @@ export class Job {
     return this;
   }
 
-  addStep(step: Step | ((step: Step) => Step)): this {
+  addStep(step: Step | ((step: Step) => Step<string | null>)): this {
     if (step instanceof Step) {
       this.job.steps.push(step.toJSON());
     } else {

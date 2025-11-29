@@ -1,12 +1,29 @@
 import type { ActionInputsRegistry } from "../../.ts-actions/imports/registry.d.js";
 import { loadActionType } from "../actions/loader.js";
 import { parseActionReference } from "../actions/parser.js";
+import type { ActionClassType } from "../actions/types.js";
 import type { StepEnv, Step as StepType, StepWith } from "./types.js";
 
 // Helper type to get input type for an action
-type ActionInputs<TAction extends string> = TAction extends keyof ActionInputsRegistry
-  ? ActionInputsRegistry[TAction]
-  : Record<string, string | number | boolean>;
+// This will fail if ActionInputsRegistry cannot be imported
+type ActionInputs<TAction extends keyof ActionInputsRegistry> = [
+  ValidActionInputsRegistry,
+] extends [never]
+  ? never
+  : ActionInputsRegistry[TAction];
+
+// Type guard to ensure ActionInputsRegistry is properly defined (not any)
+// If the import fails, ActionInputsRegistry will be 'any', which we want to reject
+// This type ensures we can detect when the registry is missing or is 'any'
+// Check if it's 'any' first (when import fails, TypeScript uses 'any')
+type IsAny<T> = 0 extends 1 & T ? true : false;
+type ValidActionInputsRegistry = IsAny<ActionInputsRegistry> extends true
+  ? never // Reject 'any' type
+  : [ActionInputsRegistry] extends [Record<string, unknown>]
+    ? [keyof ActionInputsRegistry] extends [never]
+      ? never // Empty registry
+      : ActionInputsRegistry // Valid registry
+    : never; // Not a record type
 
 export class Step<TAction extends string | null = null> {
   private step: StepType;
@@ -26,10 +43,15 @@ export class Step<TAction extends string | null = null> {
     return this;
   }
 
-  uses<TActionRef extends string>(action: TActionRef): Step<TActionRef> {
-    this.step.uses = action;
-    this.currentActionRef = action;
-    return this as Step<TActionRef>;
+  uses<TActionClass extends ActionClassType>(
+    action: TActionClass
+  ): Step<TActionClass["reference"]> {
+    // Access the reference property from the class constructor or instance
+    // This works for both static classes (with static/constructor reference) and instances
+    const actionRef = (action as { reference: string }).reference;
+    this.step.uses = actionRef;
+    this.currentActionRef = actionRef;
+    return this as unknown as Step<TActionClass["reference"]>;
   }
 
   run(command: string): Step<null> {
@@ -38,13 +60,21 @@ export class Step<TAction extends string | null = null> {
     return this as Step<null>;
   }
 
-  with<TInputs extends ActionInputs<NonNullable<TAction>>>(inputs: TInputs): this {
+  with(
+    inputs: [ValidActionInputsRegistry] extends [never]
+      ? { __error: "ActionInputsRegistry is missing. Run: ts-actions import <action>" }
+      : TAction extends keyof ActionInputsRegistry
+        ? ActionInputs<TAction>
+        : {
+            __error: `Action "${TAction & string}" is not imported. Run: ts-actions import ${TAction & string}`;
+          }
+  ): this {
     // Validate inputs against imported action if available
     if (this.currentActionRef) {
-      this.validateActionInputs(inputs as StepWith);
+      this.validateActionInputs(inputs as unknown as StepWith);
     }
 
-    this.step.with = { ...this.step.with, ...(inputs as StepWith) };
+    this.step.with = { ...this.step.with, ...(inputs as unknown as StepWith) };
     return this;
   }
 

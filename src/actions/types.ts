@@ -40,3 +40,20 @@ export interface ImportedAction {
   metadata: ActionMetadata;
   typeDefinition: string; // Generated TypeScript type definition
 }
+
+/**
+ * Base interface for all generated action classes
+ * All action classes must have a static reference property
+ */
+export interface ActionClass {
+  readonly reference: string;
+}
+
+/**
+ * Type for action class with static reference property
+ * This allows the class itself to be used directly without instantiation
+ * Accepts any object/class that has a readonly reference property
+ */
+export type ActionClassType = {
+  readonly reference: string;
+};
