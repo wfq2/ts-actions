@@ -51,12 +51,17 @@ export class Step<TAction extends string | null = null> {
     const actionRef = (action as { reference: string }).reference;
     this.step.uses = actionRef;
     this.currentActionRef = actionRef;
+    // Clear run property since a step cannot have both uses and run
+    this.step.run = undefined;
     return this as unknown as Step<TActionClass["reference"]>;
   }
 
   run(command: string): Step<null> {
     this.step.run = command;
     this.currentActionRef = null; // Clear action ref when using run
+    // Clear uses and with properties since a step cannot have both uses and run
+    this.step.uses = undefined;
+    this.step.with = undefined;
     return this as Step<null>;
   }
 
@@ -143,6 +148,12 @@ export class Step<TAction extends string | null = null> {
   }
 
   toJSON(): StepType {
+    // Validate that a step doesn't have both uses and run (defensive check)
+    if (this.step.uses && this.step.run) {
+      throw new Error(
+        "Invalid step: a step cannot have both 'uses' and 'run' properties. A step must be either an action step (uses) or a script step (run), not both."
+      );
+    }
     return { ...this.step };
   }
 }

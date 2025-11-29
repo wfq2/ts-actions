@@ -8,5 +8,6 @@ export const testWorkflow = new Workflow("Test")
     job
       .runsOn("ubuntu-latest")
       .addStep(setupAndInstallNode)
+      .addStep((step) => step.name("Install dependencies").run("npm ci"))
       .addStep((step) => step.name("Run tests").run("npm run test"))
   );
