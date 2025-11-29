@@ -14,5 +14,6 @@ export const lintWorkflow = new Workflow("Lint")
           .uses(ActionsSetupNode4)
           .with({ "node-version": "24", cache: "npm" })
       )
+      .addStep((step) => step.name("Install dependencies").run("npm ci"))
       .addStep((step) => step.name("Run linting").run("npm run check"))
   );

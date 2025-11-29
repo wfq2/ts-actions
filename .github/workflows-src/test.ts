@@ -9,7 +9,10 @@ export const testWorkflow = new Workflow("Test")
       .runsOn("ubuntu-latest")
       .addStep((step) => step.name("Checkout code").uses(ActionsCheckout4))
       .addStep((step) =>
-        step.name("Setup Node.js").uses(ActionsSetupNode4).with({ "node-version": "20" })
+        step
+          .name("Setup Node.js")
+          .uses(ActionsSetupNode4)
+          .with({ "node-version": "24", cache: "npm" })
       )
       .addStep((step) => step.name("Install dependencies").run("npm ci"))
       .addStep((step) => step.name("Run tests").run("npm run test"))
