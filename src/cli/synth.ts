@@ -3,9 +3,113 @@ import { Command } from "commander";
 import { fetchActionYml } from "../actions/fetcher.js";
 import { generateActionTypeName } from "../actions/generator.js";
 import { parseActionReference } from "../actions/parser.js";
-import { getRegistryEntry, isActionImported, saveImportedAction } from "../actions/storage.js";
+import {
+  getRegistryEntry,
+  isActionImported,
+  loadImportedActionMetadata,
+  loadRegistry,
+  saveImportedAction,
+} from "../actions/storage.js";
+import type { RegistryEntry } from "../actions/storage.js";
 
 const program = new Command();
+
+/**
+ * Format an imported action entry for JSON output
+ */
+function formatActionForJson(entry: RegistryEntry) {
+  const metadata = loadImportedActionMetadata({
+    owner: entry.owner,
+    repo: entry.repo,
+    version: entry.version,
+    full: entry.full,
+  });
+
+  return {
+    reference: entry.full,
+    typeName: entry.typeName,
+    class: entry.typeName,
+    owner: entry.owner,
+    repo: entry.repo,
+    version: entry.version,
+    importedAt: entry.importedAt,
+    inputs: metadata?.inputs ? Object.keys(metadata.inputs).length : 0,
+    outputs: metadata?.outputs ? Object.keys(metadata.outputs).length : 0,
+  };
+}
+
+/**
+ * Format an imported action entry for human-readable output
+ */
+function formatActionForDisplay(entry: RegistryEntry) {
+  const metadata = loadImportedActionMetadata({
+    owner: entry.owner,
+    repo: entry.repo,
+    version: entry.version,
+    full: entry.full,
+  });
+
+  const lines = [
+    `  Action: ${entry.full}`,
+    `  Class: ${entry.typeName}`,
+    `  Type Name: ${entry.typeName}Inputs`,
+    `  Imported: ${new Date(entry.importedAt).toLocaleString()}`,
+  ];
+
+  if (metadata) {
+    lines.push(
+      `  Inputs: ${metadata.inputs ? Object.keys(metadata.inputs).length : 0}`,
+      `  Outputs: ${metadata.outputs ? Object.keys(metadata.outputs).length : 0}`
+    );
+  }
+
+  return lines;
+}
+
+/**
+ * Output list in JSON format
+ */
+function outputJsonFormat(registry: { actions: RegistryEntry[] }) {
+  const coreClasses = ["Workflow", "Job", "Step"];
+  const output = {
+    imports: registry.actions.map(formatActionForJson),
+    coreClasses: coreClasses.map((className) => ({
+      name: className,
+      source: "ts-actions",
+    })),
+  };
+
+  console.log(JSON.stringify(output, null, 2));
+}
+
+/**
+ * Output list in human-readable format
+ */
+function outputHumanReadableFormat(registry: { actions: RegistryEntry[] }) {
+  const coreClasses = ["Workflow", "Job", "Step"];
+
+  console.log("📦 Imported Actions");
+  console.log("=".repeat(60));
+
+  if (registry.actions.length === 0) {
+    console.log("No actions imported yet.");
+    console.log("Use 'ts-actions import <action>' to import an action.");
+  } else {
+    for (const entry of registry.actions) {
+      const lines = formatActionForDisplay(entry);
+      console.log(`\n${lines.join("\n")}`);
+    }
+  }
+
+  console.log("\n\n🏗️  Core Classes");
+  console.log("=".repeat(60));
+  for (const className of coreClasses) {
+    console.log(`\n  ${className}`);
+    console.log(`    Import: import { ${className} } from "ts-actions"`);
+  }
+
+  console.log("\n");
+}
 
 program
   .name("ts-actions")
@@ -83,6 +187,28 @@ program
       console.log(`  Outputs: ${metadata.outputs ? Object.keys(metadata.outputs).length : 0}`);
     } catch (error) {
       console.error("Error importing action:", error);
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command("list")
+  .description("List all imported actions and available classes")
+  .option("--json", "Output as JSON", false)
+  .action((options: { json: boolean }) => {
+    try {
+      const registry = loadRegistry();
+
+      if (options.json) {
+        outputJsonFormat(registry);
+      } else {
+        outputHumanReadableFormat(registry);
+      }
+    } catch (error) {
+      console.error("Error listing imports and classes:", error);
       if (error instanceof Error) {
         console.error(error.message);
       }

@@ -93,7 +93,7 @@ export function saveImportedAction(reference: ActionReference, metadata: ActionM
   ensureImportsDirectory(reference);
 
   const typeName = generateActionTypeName(reference.owner, reference.repo, reference.version);
-  const typeDefinition = generateTypeDefinition(metadata, typeName, reference.full);
+  const typeDefinition = generateTypeDefinition(metadata, typeName, reference);
 
   // Save type definition
   const typeFilePath = getTypeFilePath(reference);

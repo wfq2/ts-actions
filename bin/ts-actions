@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
 require("tsx/cjs/api").register();
-require("../src/cli/synth.js");
+require("../src/cli/synth.ts");
 
