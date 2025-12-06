@@ -15,3 +15,9 @@ npm run test
 ```
 
 - Add tests into the tests/ directory
+
+- This project needs to be built using jsii, so always make sure it builds.  Additionally all interfaces need
+to be compatible with jsii
+```
+npm run build:python
+```

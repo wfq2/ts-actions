@@ -1,0 +1,2844 @@
+{
+  "author": {
+    "name": "ts-actions contributors",
+    "roles": [
+      "author"
+    ]
+  },
+  "bin": {
+    "ts-actions": "./bin/ts-actions"
+  },
+  "bundled": {
+    "commander": "^12.1.0",
+    "yaml": "^2.6.1"
+  },
+  "description": "TypeScript library for programmatically creating GitHub Actions workflows",
+  "homepage": "https://github.com/ts-actions/ts-actions.git",
+  "jsiiVersion": "5.9.14 (build 9fc28bd)",
+  "keywords": [
+    "github-actions",
+    "workflows",
+    "typescript",
+    "cdk"
+  ],
+  "license": "ISC",
+  "metadata": {
+    "jsii": {
+      "pacmak": {
+        "hasDefaultInterfaces": true
+      }
+    }
+  },
+  "name": "ts-actions",
+  "readme": {
+    "markdown": "# ts-actions\n\nTypeScript library for programmatically creating GitHub Actions workflows using a typesafe API, similar to how cdk8s works for Kubernetes.\n\n## Features\n\n- **Type-safe**: Full TypeScript support with comprehensive type definitions\n- **Multi-language**: Supports TypeScript and Python (via jsii)\n- **Fluent API**: Chainable methods for building workflows\n- **YAML Generation**: Automatically generates valid GitHub Actions YAML files\n- **CLI Tool**: Command-line interface for synthesizing workflows\n\n## Installation\n\n### TypeScript/JavaScript\n\n```bash\nnpm install ts-actions\n```\n\n### Python\n\n```bash\npip install ts-actions\n```\n\n## Usage\n\n### TypeScript Example\n\n```typescript\nimport { Workflow, Job, Step } from \"ts-actions\";\n\nconst workflow = new Workflow(\"CI\")\n  .onPush({ branches: [\"main\"] })\n  .addJob(\"build\", (job) =>\n    job\n      .runsOn(\"ubuntu-latest\")\n      .addStep((step) =>\n        step\n          .name(\"Checkout code\")\n          .uses(\"actions/checkout@v4\")\n      )\n      .addStep((step) =>\n        step\n          .name(\"Setup Node.js\")\n          .uses(\"actions/setup-node@v4\")\n          .with({ \"node-version\": \"20\" })\n      )\n      .addStep((step) =>\n        step\n          .name(\"Install dependencies\")\n          .run(\"npm install\")\n      )\n      .addStep((step) =>\n        step\n          .name(\"Run tests\")\n          .run(\"npm test\")\n      )\n  );\n\n// Synthesize to YAML\nimport { synthesize } from \"ts-actions\";\nsynthesize(workflow, \"dist\");\n```\n\n### Python Example\n\n```python\nfrom ts_actions import Workflow, Job, Step, synthesize\n\nworkflow = Workflow(\"CI\") \\\n    .on_push(branches=[\"main\"]) \\\n    .add_job(\"build\", lambda job: job\n        .runs_on(\"ubuntu-latest\")\n        .add_step(lambda step: step\n            .name(\"Checkout code\")\n            .uses(\"actions/checkout@v4\")\n        )\n        .add_step(lambda step: step\n            .name(\"Setup Node.js\")\n            .uses(\"actions/setup-node@v4\")\n            .with({\"node-version\": \"20\"})\n        )\n        .add_step(lambda step: step\n            .name(\"Install dependencies\")\n            .run(\"npm install\")\n        )\n        .add_step(lambda step: step\n            .name(\"Run tests\")\n            .run(\"npm test\")\n        )\n    )\n\n# Synthesize to YAML\nsynthesize(workflow, \"dist\")\n```\n\n### Advanced Example\n\n```typescript\nimport { Workflow, Job, Step } from \"ts-actions\";\n\nconst workflow = new Workflow(\"Deploy\")\n  .onWorkflowDispatch({\n    environment: {\n      description: \"Environment to deploy to\",\n      required: true,\n      type: \"choice\",\n      options: [\"staging\", \"production\"],\n    },\n  })\n  .addJob(\"deploy-staging\", (job) =>\n    job\n      .runsOn(\"ubuntu-latest\")\n      .if(\"github.event.inputs.environment == 'staging'\")\n      .addStep((step) =>\n        step\n          .name(\"Deploy to staging\")\n          .run(\"echo 'Deploying to staging'\")\n      )\n  )\n  .addJob(\"deploy-production\", (job) =>\n    job\n      .runsOn(\"ubuntu-latest\")\n      .if(\"github.event.inputs.environment == 'production'\")\n      .needs(\"deploy-staging\")\n      .addStep((step) =>\n        step\n          .name(\"Deploy to production\")\n          .run(\"echo 'Deploying to production'\")\n      )\n  );\n\nimport { synthesize } from \"ts-actions\";\nsynthesize(workflow, \"dist\");\n```\n\n## API Reference\n\n### Workflow\n\nThe main entry point for creating workflows.\n\n```typescript\nconst workflow = new Workflow(\"Workflow Name\")\n  .onPush({ branches: [\"main\"] })\n  .onPullRequest({ branches: [\"main\"] })\n  .onWorkflowDispatch()\n  .addJob(\"job-id\", job => { /* ... */ })\n  .env({ KEY: \"value\" })\n  .permissions({ contents: \"read\" });\n```\n\n### Job\n\nRepresents a GitHub Actions job.\n\n```typescript\nconst job = new Job(\"ubuntu-latest\")\n  .runsOn(\"ubuntu-latest\")\n  .needs([\"job1\", \"job2\"])\n  .if(\"condition\")\n  .addStep(step => { /* ... */ })\n  .env({ KEY: \"value\" })\n  .timeoutMinutes(30)\n  .strategy({\n    matrix: { node: [\"18\", \"20\"] },\n    \"fail-fast\": false,\n  });\n```\n\n### Step\n\nRepresents a step within a job.\n\n```typescript\nconst step = new Step()\n  .name(\"Step name\")\n  .uses(\"actions/checkout@v4\")\n  .run(\"npm install\")\n  .with({ key: \"value\" })\n  .env({ KEY: \"value\" })\n  .if(\"condition\")\n  .continueOnError()\n  .timeoutMinutes(10);\n```\n\n## CLI\n\nThe CLI tool provides a `synth` command for synthesizing workflows:\n\n```bash\nnpx ts-actions synth <file> [options]\n```\n\nOptions:\n- `-o, --output <dir>`: Output directory for YAML files (default: `dist`)\n\n## Scripts\n\n- `npm run build` - Compile TypeScript to JavaScript and generate jsii assembly\n- `npm run build:ts` - Compile TypeScript to JavaScript only\n- `npm run build:jsii` - Generate jsii assembly\n- `npm run build:python` - Generate Python package\n- `npm run watch` - Watch mode for development\n- `npm run lint` - Run Biome linter\n- `npm run format` - Format code with Biome\n- `npm run check` - Run linter and auto-fix issues\n- `npm run synth` - Synthesize workflows (example)\n\n## Development\n\n1. Clone the repository\n2. Install dependencies: `npm install`\n3. Make changes to the source code in `src/`\n4. Build: `npm run build`\n5. Format and lint: `npm run check`\n\n### Building Python Package\n\nTo generate the Python package:\n\n```bash\nnpm run build:python\n```\n\nThis will create the Python package in the `dist/python` directory.\n\n## License\n\nISC\n\n"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ts-actions/ts-actions.git"
+  },
+  "schema": "jsii/0.10.0",
+  "targets": {
+    "js": {
+      "npm": "ts-actions"
+    },
+    "python": {
+      "distName": "ts-actions",
+      "module": "ts_actions"
+    }
+  },
+  "types": {
+    "ts-actions.IActionClassType": {
+      "assembly": "ts-actions",
+      "docs": {
+        "summary": "Interface for action class with static reference property This allows the class itself to be used directly without instantiation Accepts any object/class that has a readonly reference property."
+      },
+      "fqn": "ts-actions.IActionClassType",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/actions/types.d.ts",
+        "line": 50
+      },
+      "name": "IActionClassType",
+      "properties": [
+        {
+          "abstract": true,
+          "immutable": true,
+          "locationInModule": {
+            "filename": "dist/src/actions/types.d.ts",
+            "line": 51
+          },
+          "name": "reference",
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/actions/types:IActionClassType"
+    },
+    "ts-actions.IJob": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IJob",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 94
+      },
+      "name": "IJob",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 100
+          },
+          "name": "steps",
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IStep"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 113
+          },
+          "name": "concurrency",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IJobConcurrency"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 107
+          },
+          "name": "defaults",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IJobDefaults"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 104
+          },
+          "name": "env",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 97
+          },
+          "name": "needs",
+          "optional": true,
+          "type": {
+            "union": {
+              "types": [
+                {
+                  "primitive": "string"
+                },
+                {
+                  "collection": {
+                    "elementtype": {
+                      "primitive": "string"
+                    },
+                    "kind": "array"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 101
+          },
+          "name": "outputs",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 110
+          },
+          "name": "strategy",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IJobStrategy"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IJob"
+    },
+    "ts-actions.IJobConcurrency": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IJobConcurrency",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 230
+      },
+      "name": "IJobConcurrency",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 231
+          },
+          "name": "group",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IJobConcurrency"
+    },
+    "ts-actions.IJobDefaults": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IJobDefaults",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 90
+      },
+      "name": "IJobDefaults",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 91
+          },
+          "name": "run",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IJobDefaultsRun"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IJobDefaults"
+    },
+    "ts-actions.IJobDefaultsRun": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IJobDefaultsRun",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 85
+      },
+      "name": "IJobDefaultsRun",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 86
+          },
+          "name": "shell",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IJobDefaultsRun"
+    },
+    "ts-actions.IJobStrategy": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IJobStrategy",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 221
+      },
+      "name": "IJobStrategy",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 222
+          },
+          "name": "matrix",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "collection": {
+                  "elementtype": {
+                    "union": {
+                      "types": [
+                        {
+                          "primitive": "string"
+                        },
+                        {
+                          "primitive": "number"
+                        }
+                      ]
+                    }
+                  },
+                  "kind": "array"
+                }
+              },
+              "kind": "map"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IJobStrategy"
+    },
+    "ts-actions.IPullRequestTriggerConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IPullRequestTriggerConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 15
+      },
+      "name": "IPullRequestTriggerConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 16
+          },
+          "name": "branches",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 18
+          },
+          "name": "paths",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 19
+          },
+          "name": "pathsIgnore",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 17
+          },
+          "name": "tags",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 20
+          },
+          "name": "types",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IPullRequestTriggerConfig"
+    },
+    "ts-actions.IPullRequestTriggerOptions": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IPullRequestTriggerOptions",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 188
+      },
+      "name": "IPullRequestTriggerOptions",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 189
+          },
+          "name": "branches",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 191
+          },
+          "name": "paths",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 192
+          },
+          "name": "pathsIgnore",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 190
+          },
+          "name": "tags",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 193
+          },
+          "name": "types",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IPullRequestTriggerOptions"
+    },
+    "ts-actions.IPushTriggerConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IPushTriggerConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 9
+      },
+      "name": "IPushTriggerConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 10
+          },
+          "name": "branches",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 12
+          },
+          "name": "paths",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 13
+          },
+          "name": "pathsIgnore",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 11
+          },
+          "name": "tags",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IPushTriggerConfig"
+    },
+    "ts-actions.IPushTriggerOptions": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IPushTriggerOptions",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 182
+      },
+      "name": "IPushTriggerOptions",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 183
+          },
+          "name": "branches",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 185
+          },
+          "name": "paths",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 186
+          },
+          "name": "pathsIgnore",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 184
+          },
+          "name": "tags",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IPushTriggerOptions"
+    },
+    "ts-actions.IRepositoryDispatchConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IRepositoryDispatchConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 30
+      },
+      "name": "IRepositoryDispatchConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 31
+          },
+          "name": "types",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IRepositoryDispatchConfig"
+    },
+    "ts-actions.IScheduleConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IScheduleConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 27
+      },
+      "name": "IScheduleConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 28
+          },
+          "name": "cron",
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IScheduleConfig"
+    },
+    "ts-actions.IStep": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IStep",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 136
+      },
+      "name": "IStep",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 144
+          },
+          "name": "env",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 137
+          },
+          "name": "id",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 138
+          },
+          "name": "name",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 140
+          },
+          "name": "run",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 139
+          },
+          "name": "uses",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 141
+          },
+          "name": "with",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "union": {
+                  "types": [
+                    {
+                      "primitive": "string"
+                    },
+                    {
+                      "primitive": "number"
+                    },
+                    {
+                      "primitive": "boolean"
+                    }
+                  ]
+                }
+              },
+              "kind": "map"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IStep"
+    },
+    "ts-actions.IStepConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IStepConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 116
+      },
+      "name": "IStepConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 124
+          },
+          "name": "env",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 117
+          },
+          "name": "id",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 118
+          },
+          "name": "name",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 120
+          },
+          "name": "run",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 119
+          },
+          "name": "uses",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 121
+          },
+          "name": "with",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "union": {
+                  "types": [
+                    {
+                      "primitive": "string"
+                    },
+                    {
+                      "primitive": "number"
+                    },
+                    {
+                      "primitive": "boolean"
+                    }
+                  ]
+                }
+              },
+              "kind": "map"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IStepConfig"
+    },
+    "ts-actions.IWorkflowCallConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowCallConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 33
+      },
+      "name": "IWorkflowCallConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 34
+          },
+          "name": "inputs",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IWorkflowCallInput"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 37
+          },
+          "name": "outputs",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IWorkflowCallOutput"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 40
+          },
+          "name": "secrets",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowCallConfig"
+    },
+    "ts-actions.IWorkflowCallInput": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowCallInput",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 202
+      },
+      "name": "IWorkflowCallInput",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 203
+          },
+          "name": "description",
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 205
+          },
+          "name": "default",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 204
+          },
+          "name": "required",
+          "optional": true,
+          "type": {
+            "primitive": "boolean"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 206
+          },
+          "name": "type",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowCallInput"
+    },
+    "ts-actions.IWorkflowCallOptions": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowCallOptions",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 212
+      },
+      "name": "IWorkflowCallOptions",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 213
+          },
+          "name": "inputs",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IWorkflowCallInput"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 216
+          },
+          "name": "outputs",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IWorkflowCallOutput"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 219
+          },
+          "name": "secrets",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowCallOptions"
+    },
+    "ts-actions.IWorkflowCallOutput": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowCallOutput",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 208
+      },
+      "name": "IWorkflowCallOutput",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 209
+          },
+          "name": "description",
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 210
+          },
+          "name": "value",
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowCallOutput"
+    },
+    "ts-actions.IWorkflowConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 235
+      },
+      "name": "IWorkflowConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 238
+          },
+          "name": "jobs",
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IJob"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 237
+          },
+          "name": "on",
+          "type": {
+            "fqn": "ts-actions.IWorkflowTrigger"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 244
+          },
+          "name": "defaults",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IJobDefaults"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 241
+          },
+          "name": "env",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "map"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 236
+          },
+          "name": "name",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 245
+          },
+          "name": "permissions",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IWorkflowPermissions"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowConfig"
+    },
+    "ts-actions.IWorkflowDispatchConfig": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowDispatchConfig",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 22
+      },
+      "name": "IWorkflowDispatchConfig",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 23
+          },
+          "name": "inputs",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IWorkflowDispatchInput"
+              },
+              "kind": "map"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowDispatchConfig"
+    },
+    "ts-actions.IWorkflowDispatchInput": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowDispatchInput",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 195
+      },
+      "name": "IWorkflowDispatchInput",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 196
+          },
+          "name": "description",
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 198
+          },
+          "name": "default",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 200
+          },
+          "name": "options",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "primitive": "string"
+              },
+              "kind": "array"
+            }
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 197
+          },
+          "name": "required",
+          "optional": true,
+          "type": {
+            "primitive": "boolean"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 199
+          },
+          "name": "type",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowDispatchInput"
+    },
+    "ts-actions.IWorkflowPermissions": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowPermissions",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 163
+      },
+      "name": "IWorkflowPermissions",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 164
+          },
+          "name": "actions",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 165
+          },
+          "name": "checks",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 166
+          },
+          "name": "contents",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 167
+          },
+          "name": "deployments",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 171
+          },
+          "name": "discussions",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 170
+          },
+          "name": "issues",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 172
+          },
+          "name": "packages",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 173
+          },
+          "name": "pages",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 180
+          },
+          "name": "statuses",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowPermissions"
+    },
+    "ts-actions.IWorkflowTrigger": {
+      "assembly": "ts-actions",
+      "fqn": "ts-actions.IWorkflowTrigger",
+      "kind": "interface",
+      "locationInModule": {
+        "filename": "dist/src/core/types.d.ts",
+        "line": 42
+      },
+      "name": "IWorkflowTrigger",
+      "properties": [
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 43
+          },
+          "name": "push",
+          "optional": true,
+          "type": {
+            "fqn": "ts-actions.IPushTriggerConfig"
+          }
+        },
+        {
+          "abstract": true,
+          "locationInModule": {
+            "filename": "dist/src/core/types.d.ts",
+            "line": 48
+          },
+          "name": "schedule",
+          "optional": true,
+          "type": {
+            "collection": {
+              "elementtype": {
+                "fqn": "ts-actions.IScheduleConfig"
+              },
+              "kind": "array"
+            }
+          }
+        }
+      ],
+      "symbolId": "src/core/types:IWorkflowTrigger"
+    },
+    "ts-actions.Job": {
+      "assembly": "ts-actions",
+      "docs": {
+        "stability": "stable",
+        "summary": "A GitHub Actions job definition."
+      },
+      "fqn": "ts-actions.Job",
+      "initializer": {
+        "docs": {
+          "stability": "stable",
+          "summary": "Creates a new job."
+        },
+        "locationInModule": {
+          "filename": "dist/src/core/job.d.ts",
+          "line": 17
+        },
+        "parameters": [
+          {
+            "docs": {
+              "summary": "- The runner(s) to use for this job."
+            },
+            "name": "runsOn",
+            "type": {
+              "union": {
+                "types": [
+                  {
+                    "primitive": "string"
+                  },
+                  {
+                    "collection": {
+                      "elementtype": {
+                        "primitive": "string"
+                      },
+                      "kind": "array"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "kind": "class",
+      "locationInModule": {
+        "filename": "dist/src/core/job.d.ts",
+        "line": 8
+      },
+      "methods": [
+        {
+          "docs": {
+            "remarks": "Adds multiple steps to this job.",
+            "stability": "stable",
+            "summary": "Adds a step to this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 53
+          },
+          "name": "addStep",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- A step instance."
+              },
+              "name": "step",
+              "type": {
+                "fqn": "ts-actions.Step"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets concurrency settings for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 121
+          },
+          "name": "concurrency",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Concurrency group name."
+              },
+              "name": "group",
+              "type": {
+                "primitive": "string"
+              }
+            },
+            {
+              "docs": {
+                "summary": "- Whether to cancel in-progress runs."
+              },
+              "name": "cancelInProgress",
+              "optional": true,
+              "type": {
+                "primitive": "boolean"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets whether this job should continue on error."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 113
+          },
+          "name": "continueOnError",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Whether to continue on error (default: true)."
+              },
+              "name": "continueOnError",
+              "optional": true,
+              "type": {
+                "primitive": "boolean"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets default values for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 92
+          },
+          "name": "defaults",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Default values."
+              },
+              "name": "defaults",
+              "type": {
+                "fqn": "ts-actions.IJobDefaults"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets environment variables for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 83
+          },
+          "name": "env",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Environment variables."
+              },
+              "name": "variables",
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "primitive": "string"
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "remarks": "Alias for ifCondition for backward compatibility.",
+            "stability": "stable",
+            "summary": "Sets a conditional expression for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 46
+          },
+          "name": "if",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The conditional expression."
+              },
+              "name": "condition",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets a conditional expression for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 38
+          },
+          "name": "ifCondition",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The conditional expression."
+              },
+              "name": "condition",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets job dependencies."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 31
+          },
+          "name": "needs",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Job ID(s) that this job depends on."
+              },
+              "name": "jobIds",
+              "type": {
+                "union": {
+                  "types": [
+                    {
+                      "primitive": "string"
+                    },
+                    {
+                      "collection": {
+                        "elementtype": {
+                          "primitive": "string"
+                        },
+                        "kind": "array"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets job outputs."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 74
+          },
+          "name": "outputs",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Job output definitions."
+              },
+              "name": "outputs",
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "primitive": "string"
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the runner(s) for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 24
+          },
+          "name": "runsOn",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The runner(s) to use."
+              },
+              "name": "runner",
+              "type": {
+                "union": {
+                  "types": [
+                    {
+                      "primitive": "string"
+                    },
+                    {
+                      "collection": {
+                        "elementtype": {
+                          "primitive": "string"
+                        },
+                        "kind": "array"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the build matrix strategy for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 106
+          },
+          "name": "strategy",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Build matrix strategy."
+              },
+              "name": "strategy",
+              "type": {
+                "fqn": "ts-actions.IJobStrategy"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the timeout in minutes for this job."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 99
+          },
+          "name": "timeoutMinutes",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Timeout in minutes."
+              },
+              "name": "minutes",
+              "type": {
+                "primitive": "number"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Job"
+            }
+          }
+        },
+        {
+          "docs": {
+            "returns": "The job configuration",
+            "stability": "stable",
+            "summary": "Converts the job to JSON configuration."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 128
+          },
+          "name": "toJSON",
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.IJob"
+            }
+          }
+        }
+      ],
+      "name": "Job",
+      "properties": [
+        {
+          "docs": {
+            "stability": "stable"
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/job.d.ts",
+            "line": 10
+          },
+          "name": "id",
+          "optional": true,
+          "type": {
+            "primitive": "string"
+          }
+        }
+      ],
+      "symbolId": "src/core/job:Job"
+    },
+    "ts-actions.Step": {
+      "assembly": "ts-actions",
+      "docs": {
+        "stability": "stable",
+        "summary": "A GitHub Actions step definition."
+      },
+      "fqn": "ts-actions.Step",
+      "initializer": {
+        "docs": {
+          "stability": "stable",
+          "summary": "Creates a new step."
+        },
+        "locationInModule": {
+          "filename": "dist/src/core/step.d.ts",
+          "line": 16
+        }
+      },
+      "kind": "class",
+      "locationInModule": {
+        "filename": "dist/src/core/step.d.ts",
+        "line": 8
+      },
+      "methods": [
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets whether this step should continue on error."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 80
+          },
+          "name": "continueOnError",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Whether to continue on error (default: true)."
+              },
+              "name": "continueOnError",
+              "optional": true,
+              "type": {
+                "primitive": "boolean"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets environment variables for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 71
+          },
+          "name": "env",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Environment variables."
+              },
+              "name": "variables",
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "primitive": "string"
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the step ID."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 23
+          },
+          "name": "id",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The step ID."
+              },
+              "name": "id",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "remarks": "Alias for ifCondition for backward compatibility.",
+            "stability": "stable",
+            "summary": "Sets a conditional expression for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 102
+          },
+          "name": "if",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The conditional expression."
+              },
+              "name": "condition",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets a conditional expression for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 94
+          },
+          "name": "ifCondition",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The conditional expression."
+              },
+              "name": "condition",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the step name."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 30
+          },
+          "name": "name",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The step name."
+              },
+              "name": "name",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the command to run for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 44
+          },
+          "name": "run",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The command to run."
+              },
+              "name": "command",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the timeout in minutes for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 87
+          },
+          "name": "timeoutMinutes",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Timeout in minutes."
+              },
+              "name": "minutes",
+              "type": {
+                "primitive": "number"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "returns": "The step configuration",
+            "stability": "stable",
+            "summary": "Converts the step to JSON configuration."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 116
+          },
+          "name": "toJSON",
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.IStep"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the action to use for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 37
+          },
+          "name": "uses",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The action class to use."
+              },
+              "name": "action",
+              "type": {
+                "fqn": "ts-actions.IActionClassType"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "remarks": "Alias for withInputs for backward compatibility.",
+            "stability": "stable",
+            "summary": "Sets input parameters for the action used in this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 61
+          },
+          "name": "with",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Input parameters for the action."
+              },
+              "name": "inputs",
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "union": {
+                      "types": [
+                        {
+                          "primitive": "string"
+                        },
+                        {
+                          "primitive": "number"
+                        },
+                        {
+                          "primitive": "boolean"
+                        }
+                      ]
+                    }
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets input parameters for the action used in this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 51
+          },
+          "name": "withInputs",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Input parameters for the action."
+              },
+              "name": "inputs",
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "union": {
+                      "types": [
+                        {
+                          "primitive": "string"
+                        },
+                        {
+                          "primitive": "number"
+                        },
+                        {
+                          "primitive": "boolean"
+                        }
+                      ]
+                    }
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the working directory for this step."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/step.d.ts",
+            "line": 109
+          },
+          "name": "workingDirectory",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The working directory."
+              },
+              "name": "directory",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Step"
+            }
+          }
+        }
+      ],
+      "name": "Step",
+      "symbolId": "src/core/step:Step"
+    },
+    "ts-actions.Workflow": {
+      "assembly": "ts-actions",
+      "docs": {
+        "stability": "stable",
+        "summary": "A GitHub Actions workflow definition."
+      },
+      "fqn": "ts-actions.Workflow",
+      "initializer": {
+        "docs": {
+          "stability": "stable",
+          "summary": "Creates a new workflow."
+        },
+        "locationInModule": {
+          "filename": "dist/src/core/workflow.d.ts",
+          "line": 18
+        },
+        "parameters": [
+          {
+            "docs": {
+              "summary": "- Optional workflow name."
+            },
+            "name": "name",
+            "optional": true,
+            "type": {
+              "primitive": "string"
+            }
+          }
+        ]
+      },
+      "kind": "class",
+      "locationInModule": {
+        "filename": "dist/src/core/workflow.d.ts",
+        "line": 10
+      },
+      "methods": [
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a job to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 84
+          },
+          "name": "addJob",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The job identifier."
+              },
+              "name": "jobId",
+              "type": {
+                "primitive": "string"
+              }
+            },
+            {
+              "docs": {
+                "summary": "- The job instance."
+              },
+              "name": "job",
+              "type": {
+                "fqn": "ts-actions.Job"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets default values for the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 108
+          },
+          "name": "defaults",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Default values."
+              },
+              "name": "defaults",
+              "type": {
+                "fqn": "ts-actions.IJobDefaults"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets environment variables for the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 99
+          },
+          "name": "env",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Environment variables."
+              },
+              "name": "variables",
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "primitive": "string"
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the workflow name."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 25
+          },
+          "name": "name",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The workflow name."
+              },
+              "name": "name",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets workflow triggers."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 32
+          },
+          "name": "on",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The workflow triggers."
+              },
+              "name": "triggers",
+              "type": {
+                "fqn": "ts-actions.IWorkflowTrigger"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a pull request trigger to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 46
+          },
+          "name": "onPullRequest",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Pull request trigger options."
+              },
+              "name": "options",
+              "optional": true,
+              "type": {
+                "fqn": "ts-actions.IPullRequestTriggerOptions"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a push trigger to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 39
+          },
+          "name": "onPush",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Push trigger options."
+              },
+              "name": "options",
+              "optional": true,
+              "type": {
+                "fqn": "ts-actions.IPushTriggerOptions"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a repository dispatch trigger to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 69
+          },
+          "name": "onRepositoryDispatch",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Optional event types."
+              },
+              "name": "types",
+              "optional": true,
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "primitive": "string"
+                  },
+                  "kind": "array"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a schedule trigger to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 62
+          },
+          "name": "onSchedule",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Cron expression for the schedule."
+              },
+              "name": "cron",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a workflow call trigger to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 76
+          },
+          "name": "onWorkflowCall",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Workflow call options."
+              },
+              "name": "options",
+              "optional": true,
+              "type": {
+                "fqn": "ts-actions.IWorkflowCallOptions"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Adds a workflow dispatch trigger to the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 53
+          },
+          "name": "onWorkflowDispatch",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Optional workflow dispatch inputs."
+              },
+              "name": "inputs",
+              "optional": true,
+              "type": {
+                "collection": {
+                  "elementtype": {
+                    "fqn": "ts-actions.IWorkflowDispatchInput"
+                  },
+                  "kind": "map"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets permissions for the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 115
+          },
+          "name": "permissions",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- Permission settings."
+              },
+              "name": "permissions",
+              "type": {
+                "fqn": "ts-actions.IWorkflowPermissions"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "stability": "stable",
+            "summary": "Sets the run name for the workflow."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 122
+          },
+          "name": "runName",
+          "parameters": [
+            {
+              "docs": {
+                "summary": "- The run name."
+              },
+              "name": "name",
+              "type": {
+                "primitive": "string"
+              }
+            }
+          ],
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.Workflow"
+            }
+          }
+        },
+        {
+          "docs": {
+            "returns": "The workflow configuration",
+            "stability": "stable",
+            "summary": "Converts the workflow to JSON configuration."
+          },
+          "locationInModule": {
+            "filename": "dist/src/core/workflow.d.ts",
+            "line": 129
+          },
+          "name": "toJSON",
+          "returns": {
+            "type": {
+              "fqn": "ts-actions.IWorkflowConfig"
+            }
+          }
+        }
+      ],
+      "name": "Workflow",
+      "symbolId": "src/core/workflow:Workflow"
+    }
+  },
+  "version": "1.0.0",
+  "fingerprint": "UfASDyibXEfZ0WJbCDr0h6317fE/mvKAdwfm5Q5dURE="
+}

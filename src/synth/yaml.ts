@@ -3,6 +3,13 @@ import { join } from "node:path";
 import { stringify } from "yaml";
 import type { Workflow } from "../core/workflow.js";
 
+/**
+ * Synthesizes a workflow to a YAML file.
+ *
+ * @param workflow - The workflow to synthesize
+ * @param outputDir - The output directory (default: "dist")
+ * @stability stable
+ */
 export function synthesize(workflow: Workflow, outputDir = "dist"): void {
   const config = workflow.toJSON();
   const yamlContent = stringify(config, {
@@ -22,6 +29,13 @@ export function synthesize(workflow: Workflow, outputDir = "dist"): void {
   writeFileSync(filePath, yamlContent, "utf-8");
 }
 
+/**
+ * Synthesizes multiple workflows to YAML files.
+ *
+ * @param workflows - Array of workflows with optional filenames
+ * @param outputDir - The output directory (default: "dist")
+ * @stability stable
+ */
 export function synthesizeMultiple(
   workflows: Array<{ workflow: Workflow; filename?: string }>,
   outputDir = "dist"

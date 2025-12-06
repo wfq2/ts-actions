@@ -50,10 +50,13 @@ export interface ActionClass {
 }
 
 /**
- * Type for action class with static reference property
+ * Interface for action class with static reference property
  * This allows the class itself to be used directly without instantiation
  * Accepts any object/class that has a readonly reference property
  */
-export type ActionClassType = {
+export interface IActionClassType {
   readonly reference: string;
-};
+}
+
+// Type alias for backward compatibility
+export type ActionClassType = IActionClassType;

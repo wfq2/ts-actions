@@ -8,6 +8,7 @@ import { Workflow } from "../src/core/workflow.js";
 import { synthesize } from "../src/synth/yaml.js";
 import { arrayStepsWorkflow } from "./workflows/array-steps.js";
 import { invalidStep } from "./workflows/invalid-step.js";
+import { jobOutputsWorkflow } from "./workflows/job-outputs.js";
 import { nodeTestWorkflow } from "./workflows/node-test.js";
 import { simpleCIWorkflow } from "./workflows/simple-ci.js";
 import { simpleDeployWorkflow } from "./workflows/simple-deploy.js";
@@ -189,4 +190,54 @@ test("combine array of steps into a job", () => {
   ok(yamlContent.includes("npm run build"), "Should contain npm run build command");
   ok(yamlContent.includes("Run tests"), "Should contain test step name");
   ok(yamlContent.includes("npm test"), "Should contain npm test command");
+});
+
+test("synthesize workflow with job outputs and dependencies", () => {
+  synthesize(jobOutputsWorkflow, TEST_OUTPUT_DIR);
+
+  const expectedFile = join(TEST_OUTPUT_DIR, "job-outputs-test.yml");
+  ok(existsSync(expectedFile), "Output file should exist");
+
+  const yamlContent = readFileSync(expectedFile, "utf-8");
+
+  // Assert key components of the YAML
+  ok(yamlContent.includes("name: Job Outputs Test"), "Should contain workflow name");
+  ok(yamlContent.includes("on:"), "Should contain 'on' trigger");
+  ok(yamlContent.includes("push:"), "Should contain push trigger");
+  ok(yamlContent.includes("jobs:"), "Should contain jobs");
+
+  // Verify first job exists and has outputs
+  ok(yamlContent.includes("first-job:"), "Should contain first-job");
+  ok(yamlContent.includes("outputs:"), "Should contain outputs section");
+  ok(
+    yamlContent.includes("message:") || yamlContent.includes('"message"'),
+    "Should contain message output"
+  );
+  ok(
+    yamlContent.includes("steps.generate.outputs.value") ||
+      yamlContent.includes("steps[generate].outputs.value"),
+    "Should reference step output in job output"
+  );
+
+  // Verify second job exists, depends on first job, and uses its output
+  ok(yamlContent.includes("second-job:"), "Should contain second-job");
+  ok(yamlContent.includes("needs:"), "Should contain needs field");
+  ok(
+    yamlContent.includes("needs: first-job") ||
+      yamlContent.includes("- first-job") ||
+      yamlContent.includes('"first-job"'),
+    "Should depend on first-job"
+  );
+  ok(
+    yamlContent.includes("needs.first-job.outputs.message") ||
+      yamlContent.includes("needs[first-job].outputs.message"),
+    "Should reference first-job output"
+  );
+  ok(
+    yamlContent.includes("firstJobMessage") ||
+      yamlContent.includes("FIRST_JOB_MESSAGE") ||
+      yamlContent.includes("first_job_message"),
+    "Should contain environment variable using first job output"
+  );
+  ok(yamlContent.includes("Use output from first job"), "Should contain step that uses the output");
 });

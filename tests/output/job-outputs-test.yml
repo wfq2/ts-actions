@@ -1,0 +1,26 @@
+name: Job Outputs Test
+on:
+  push:
+    branches:
+      - main
+jobs:
+  first-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Generate value
+        id: generate
+        run: echo "value=Hello from first job" >> $GITHUB_OUTPUT
+    outputs:
+      message: ${{ steps.generate.outputs.value }}
+  second-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Use output from first job
+        run: 'echo "Received: ${{ needs.first-job.outputs.message }}"'
+    needs: first-job
+    env:
+      firstJobMessage: ${{ needs.first-job.outputs.message }}

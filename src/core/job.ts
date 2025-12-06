@@ -1,10 +1,22 @@
+import type { JobOutputsRef } from "./job-outputs.js";
 import { Step } from "./step.js";
-import type { StepActionType } from "./step.js";
-import type { JobDefaults, JobEnv, JobOutputs, Job as JobType, Runner } from "./types.js";
+import type { IJob, IJobConcurrency, IJobDefaults, IJobStrategy, JobId, Runner } from "./types.js";
 
-export class Job {
-  private job: JobType;
+/**
+ * A GitHub Actions job definition.
+ *
+ * @stability stable
+ */
+export class Job<TOutputs extends Record<string, string> = Record<string, never>> {
+  private job: IJob;
+  public id?: JobId;
 
+  /**
+   * Creates a new job.
+   *
+   * @param runsOn - The runner(s) to use for this job
+   * @stability stable
+   */
   constructor(runsOn: Runner | Runner[]) {
     this.job = {
       "runs-on": runsOn,
@@ -12,32 +24,75 @@ export class Job {
     };
   }
 
+  /**
+   * Sets the runner(s) for this job.
+   *
+   * @param runner - The runner(s) to use
+   * @stability stable
+   */
   runsOn(runner: Runner | Runner[]): this {
     this.job["runs-on"] = runner;
     return this;
   }
 
-  needs(jobIds: string | string[]): this {
-    this.job.needs = jobIds;
+  /**
+   * Sets job dependencies.
+   *
+   * @param dependencies - Job reference(s) or job ID(s) that this job depends on
+   * @stability stable
+   */
+  needs(
+    dependencies:
+      | JobOutputsRef<Record<string, unknown>>
+      | JobOutputsRef<Record<string, unknown>>[]
+      | JobId
+      | JobId[]
+  ): this {
+    if (Array.isArray(dependencies)) {
+      this.job.needs = dependencies.map((dep) => (typeof dep === "string" ? dep : dep.id));
+    } else {
+      this.job.needs = typeof dependencies === "string" ? dependencies : dependencies.id;
+    }
     return this;
   }
 
+  /**
+   * Sets a conditional expression for this job.
+   *
+   * @param condition - The conditional expression
+   * @stability stable
+   */
   if(condition: string): this {
     this.job.if = condition;
     return this;
   }
 
+  /**
+   * Adds a step to this job.
+   *
+   * @param step - A step instance
+   * @stability stable
+   */
   addStep(step: Step): this;
-  addStep<TAction extends StepActionType>(step: (step: Step) => Step<TAction>): this;
-  addStep(steps: Array<Step | ((step: Step) => Step<StepActionType>)>): this;
+  /**
+   * Adds a step to this job.
+   *
+   * @param stepFn - A function that configures a step
+   * @stability stable
+   */
+  addStep(stepFn: (step: Step) => Step): this;
+  /**
+   * Adds multiple steps to this job.
+   *
+   * @param steps - An array of steps or step functions
+   * @stability stable
+   */
+  addStep(steps: Array<Step | ((step: Step) => Step)>): this;
   addStep(
-    step:
-      | Step
-      | ((step: Step) => Step<StepActionType>)
-      | Array<Step | ((step: Step) => Step<StepActionType>)>
+    stepOrFnOrArray: Step | ((step: Step) => Step) | Array<Step | ((step: Step) => Step)>
   ): this {
-    if (Array.isArray(step)) {
-      for (const s of step) {
+    if (Array.isArray(stepOrFnOrArray)) {
+      for (const s of stepOrFnOrArray) {
         if (s instanceof Step) {
           this.job.steps.push(s.toJSON());
         } else {
@@ -45,58 +100,105 @@ export class Job {
           this.job.steps.push(s(stepInstance).toJSON());
         }
       }
-    } else if (step instanceof Step) {
-      this.job.steps.push(step.toJSON());
+    } else if (stepOrFnOrArray instanceof Step) {
+      this.job.steps.push(stepOrFnOrArray.toJSON());
     } else {
       const stepInstance = new Step();
-      this.job.steps.push(step(stepInstance).toJSON());
+      this.job.steps.push(stepOrFnOrArray(stepInstance).toJSON());
     }
     return this;
   }
 
-  outputs(outputs: JobOutputs): this {
+  /**
+   * Sets job outputs.
+   *
+   * @param outputs - Job output definitions
+   * @stability stable
+   */
+  outputs<TOutputKeys extends Record<string, string>>(
+    outputs: TOutputKeys
+  ): Job<TOutputs & TOutputKeys> {
     this.job.outputs = { ...this.job.outputs, ...outputs };
-    return this;
+    return this as unknown as Job<TOutputs & TOutputKeys>;
   }
 
-  env(variables: JobEnv): this {
+  /**
+   * Sets environment variables for this job.
+   *
+   * @param variables - Environment variables
+   * @stability stable
+   */
+  env(variables: { [key: string]: string }): this {
     this.job.env = { ...this.job.env, ...variables };
     return this;
   }
 
-  defaults(defaults: JobDefaults): this {
+  /**
+   * Sets default values for this job.
+   *
+   * @param defaults - Default values
+   * @stability stable
+   */
+  defaults(defaults: IJobDefaults): this {
     this.job.defaults = defaults;
     return this;
   }
 
+  /**
+   * Sets the timeout in minutes for this job.
+   *
+   * @param minutes - Timeout in minutes
+   * @stability stable
+   */
   timeoutMinutes(minutes: number): this {
     this.job["timeout-minutes"] = minutes;
     return this;
   }
 
-  strategy(strategy: {
-    matrix?: Record<string, (string | number)[]>;
-    "fail-fast"?: boolean;
-    "max-parallel"?: number;
-  }): this {
+  /**
+   * Sets the build matrix strategy for this job.
+   *
+   * @param strategy - Build matrix strategy
+   * @stability stable
+   */
+  strategy(strategy: IJobStrategy): this {
     this.job.strategy = strategy;
     return this;
   }
 
+  /**
+   * Sets whether this job should continue on error.
+   *
+   * @param continueOnError - Whether to continue on error (default: true)
+   * @stability stable
+   */
   continueOnError(continueOnError = true): this {
     this.job["continue-on-error"] = continueOnError;
     return this;
   }
 
+  /**
+   * Sets concurrency settings for this job.
+   *
+   * @param group - Concurrency group name
+   * @param cancelInProgress - Whether to cancel in-progress runs
+   * @stability stable
+   */
   concurrency(group: string, cancelInProgress?: boolean): this {
     this.job.concurrency = {
       group,
       "cancel-in-progress": cancelInProgress,
-    };
+    } as IJobConcurrency;
     return this;
   }
 
-  toJSON(): JobType {
+  /**
+   * Converts the job to JSON configuration.
+   *
+   * @returns The job configuration
+   * @stability stable
+   */
+  toJSON(): IJob {
     return { ...this.job };
   }
 }

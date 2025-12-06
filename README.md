@@ -5,19 +5,28 @@ TypeScript library for programmatically creating GitHub Actions workflows using 
 ## Features
 
 - **Type-safe**: Full TypeScript support with comprehensive type definitions
+- **Multi-language**: Supports TypeScript and Python (via jsii)
 - **Fluent API**: Chainable methods for building workflows
 - **YAML Generation**: Automatically generates valid GitHub Actions YAML files
 - **CLI Tool**: Command-line interface for synthesizing workflows
 
 ## Installation
 
+### TypeScript/JavaScript
+
 ```bash
-npm install
+npm install ts-actions
+```
+
+### Python
+
+```bash
+pip install ts-actions
 ```
 
 ## Usage
 
-### Basic Example
+### TypeScript Example
 
 ```typescript
 import { Workflow, Job, Step } from "ts-actions";
@@ -53,6 +62,38 @@ const workflow = new Workflow("CI")
 // Synthesize to YAML
 import { synthesize } from "ts-actions";
 synthesize(workflow, "dist");
+```
+
+### Python Example
+
+```python
+from ts_actions import Workflow, Job, Step, synthesize
+
+workflow = Workflow("CI") \
+    .on_push(branches=["main"]) \
+    .add_job("build", lambda job: job
+        .runs_on("ubuntu-latest")
+        .add_step(lambda step: step
+            .name("Checkout code")
+            .uses("actions/checkout@v4")
+        )
+        .add_step(lambda step: step
+            .name("Setup Node.js")
+            .uses("actions/setup-node@v4")
+            .with({"node-version": "20"})
+        )
+        .add_step(lambda step: step
+            .name("Install dependencies")
+            .run("npm install")
+        )
+        .add_step(lambda step: step
+            .name("Run tests")
+            .run("npm test")
+        )
+    )
+
+# Synthesize to YAML
+synthesize(workflow, "dist")
 ```
 
 ### Advanced Example
@@ -158,7 +199,10 @@ Options:
 
 ## Scripts
 
-- `npm run build` - Compile TypeScript to JavaScript
+- `npm run build` - Compile TypeScript to JavaScript and generate jsii assembly
+- `npm run build:ts` - Compile TypeScript to JavaScript only
+- `npm run build:jsii` - Generate jsii assembly
+- `npm run build:python` - Generate Python package
 - `npm run watch` - Watch mode for development
 - `npm run lint` - Run Biome linter
 - `npm run format` - Format code with Biome
@@ -172,6 +216,16 @@ Options:
 3. Make changes to the source code in `src/`
 4. Build: `npm run build`
 5. Format and lint: `npm run check`
+
+### Building Python Package
+
+To generate the Python package:
+
+```bash
+npm run build:python
+```
+
+This will create the Python package in the `dist/python` directory.
 
 ## License
 

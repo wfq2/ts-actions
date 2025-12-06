@@ -4,12 +4,26 @@
   "description": "TypeScript library for programmatically creating GitHub Actions workflows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "jsii": {
+    "outdir": "dist",
+    "targets": {
+      "python": {
+        "module": "ts_actions",
+        "distName": "ts-actions"
+      }
+    }
+  },
   "bin": {
     "ts-actions": "./bin/ts-actions"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:ts && npm run build:jsii",
+    "build:ts": "tsc --project tsconfig.base.json",
+    "build:jsii": "jsii",
+    "build:python": "jsii-pacmak --target python",
     "watch": "tsc --watch",
+    "clean": "tsc --build --clean",
+    "clean:all": "npm run clean && rm -rf dist",
     "lint": "biome check .",
     "format": "biome format --write .",
     "check": "biome check --write .",
@@ -17,16 +31,27 @@
     "test": "tsx tests/synth.test.ts"
   },
   "keywords": ["github-actions", "workflows", "typescript", "cdk"],
-  "author": "",
+  "author": {
+    "name": "ts-actions contributors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ts-actions/ts-actions.git"
+  },
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "commander": "^12.1.0",
     "yaml": "^2.6.1"
   },
+  "bundledDependencies": ["commander", "yaml"],
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@jsii/spec": "^1.95.0",
     "@types/node": "^22.10.2",
+    "jsii": "^5.4.0",
+    "jsii-pacmak": "^1.95.0",
+    "jsii-rosetta": "^5.4.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
