@@ -1,4 +1,4 @@
-name: TypeScript Function Test
+name: Simple TypeScript Function Test
 on:
   push:
     branches:
@@ -46,17 +46,9 @@ jobs:
               originalConsoleError.apply(console, args);
             };
             
-            // tests/workflows/typescript-function.ts
-            module.exports = (inputValue, threshold) => {
-              const value = Number.parseInt(inputValue, 10);
-              if (value > threshold) {
-                console.log(`Value ${value} exceeds threshold ${threshold}`);
-                process.exit(1);
-              }
-              console.log(`Value ${value} is within threshold ${threshold}`);
-              process.exit(0);
-            };
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3R5cGVzY3JpcHQtZnVuY3Rpb24udHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbi8vIEV4cG9ydCB0aGUgZnVuY3Rpb25cbm1vZHVsZS5leHBvcnRzID0gKGlucHV0VmFsdWU6IHN0cmluZywgdGhyZXNob2xkOiBudW1iZXIpOiB2b2lkID0+IHtcbiAgICBjb25zdCB2YWx1ZSA9IE51bWJlci5wYXJzZUludChpbnB1dFZhbHVlLCAxMCk7XG4gICAgaWYgKHZhbHVlID4gdGhyZXNob2xkKSB7XG4gICAgICAgIGNvbnNvbGUubG9nKGBWYWx1ZSAke3ZhbHVlfSBleGNlZWRzIHRocmVzaG9sZCAke3RocmVzaG9sZH1gKTtcbiAgICAgICAgcHJvY2Vzcy5leGl0KDEpO1xuICAgIH1cbiAgICBjb25zb2xlLmxvZyhgVmFsdWUgJHt2YWx1ZX0gaXMgd2l0aGluIHRocmVzaG9sZCAke3RocmVzaG9sZH1gKTtcbiAgICBwcm9jZXNzLmV4aXQoMCk7XG59O1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7OztBQUlBLE9BQU8sVUFBVSxDQUFDLFlBQW9CLGNBQTRCO0FBQzlELFFBQU0sUUFBUSxPQUFPLFNBQVMsWUFBWSxFQUFFO0FBQzVDLE1BQUksUUFBUSxXQUFXO0FBQ25CLFlBQVEsSUFBSSxTQUFTLEtBQUssc0JBQXNCLFNBQVMsRUFBRTtBQUMzRCxZQUFRLEtBQUssQ0FBQztBQUFBLEVBQ2xCO0FBQ0EsVUFBUSxJQUFJLFNBQVMsS0FBSyx3QkFBd0IsU0FBUyxFQUFFO0FBQzdELFVBQVEsS0FBSyxDQUFDO0FBQ2xCOyIsCiAgIm5hbWVzIjogW10KfQo=
+            // tests/workflows/simple-typescript-function.ts
+            module.exports = () => console.log("Hello, world!");
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3NpbXBsZS10eXBlc2NyaXB0LWZ1bmN0aW9uLnRzIl0sCiAgInNvdXJjZXNDb250ZW50IjogWyJcblxuXG4vLyBFeHBvcnQgdGhlIGZ1bmN0aW9uXG5tb2R1bGUuZXhwb3J0cyA9ICgpID0+IGNvbnNvbGUubG9nKFwiSGVsbG8sIHdvcmxkIVwiKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFJQSxPQUFPLFVBQVUsTUFBTSxRQUFRLElBQUksZUFBZTsiLAogICJuYW1lcyI6IFtdCn0K
             
             
             // Execute the function
@@ -68,7 +60,7 @@ jobs:
                   throw new Error('Function not found in bundle. Expected module.exports to contain a function.');
                 }
                 
-                const result = await fn("100", 50);
+                const result = await fn();
                 if (result !== undefined) {
                   console.log(result);
                 }

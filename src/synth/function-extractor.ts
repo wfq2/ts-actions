@@ -88,11 +88,13 @@ function parseStackTrace(stack: string): { filePath: string; lineNumber: number 
 
       // Skip node_modules, dist directories, and internal files
       if (
-        !filePath.includes("node_modules") &&
-        !filePath.includes("dist") &&
-        !filePath.includes("src/core/step.ts") &&
-        !filePath.includes("src/synth/workflow-processor.ts") &&
-        !filePath.includes("src/synth/function-extractor.ts") &&
+        !(
+          filePath.includes("node_modules") ||
+          filePath.includes("dist") ||
+          filePath.includes("src/core/step.ts") ||
+          filePath.includes("src/synth/workflow-processor.ts") ||
+          filePath.includes("src/synth/function-extractor.ts")
+        ) &&
         existsSync(filePath)
       ) {
         return { filePath, lineNumber };
@@ -122,41 +124,67 @@ function findFunctionInAST(
   // Fallback to the old method for other cases
   const functionName = fn.name || null;
 
+  /**
+   * Check if a node is near the target line number.
+   */
+  function isNearTargetLine(node: ts.Node): boolean {
+    const nodeStart = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+    return Math.abs(nodeStart - approximateLine) < 100;
+  }
+
+  /**
+   * Check if a function declaration matches our search criteria.
+   */
+  function matchesFunctionDeclaration(node: ts.Node): ts.FunctionDeclaration | null {
+    if (!(ts.isFunctionDeclaration(node) && isNearTargetLine(node))) {
+      return null;
+    }
+    // Match by name if available, otherwise match by proximity
+    if (!functionName || (node.name && node.name.text === functionName)) {
+      return node;
+    }
+    return null;
+  }
+
+  /**
+   * Check if an arrow function or function expression matches our search criteria.
+   */
+  function matchesFunctionExpression(
+    node: ts.Node
+  ): ts.ArrowFunction | ts.FunctionExpression | null {
+    if (!((ts.isArrowFunction(node) || ts.isFunctionExpression(node)) && isNearTargetLine(node))) {
+      return null;
+    }
+
+    // For arrow functions, check if they're assigned to a variable
+    const parent = node.parent;
+    if (parent && ts.isVariableDeclaration(parent)) {
+      const varName = parent.name;
+      if (ts.isIdentifier(varName) && functionName === varName.text) {
+        return node;
+      }
+    }
+
+    // For anonymous functions, return the first one near target
+    if (!functionName) {
+      return node;
+    }
+
+    return null;
+  }
+
   // Walk the AST to find matching functions
   function visit(
     node: ts.Node
   ): ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression | null {
-    // Check if this is a function node near our target line
-    const nodeStart = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+    const functionDecl = matchesFunctionDeclaration(node);
+    if (functionDecl) {
+      return functionDecl;
+    }
 
-    // Check if node is within reasonable distance of target line (within 100 lines)
-    // Increased range to handle cases where the call site is a few lines away
-    const isNearTargetLine = Math.abs(nodeStart - approximateLine) < 100;
-
-    if (isNearTargetLine) {
-      if (ts.isFunctionDeclaration(node)) {
-        // Match by name if available, otherwise match by proximity
-        if (!functionName || (node.name && node.name.text === functionName)) {
-          return node;
-        }
-      } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
-        // For arrow functions, check if they're assigned to a variable
-        // Check parent node for variable declaration
-        const parent = node.parent;
-        if (parent && ts.isVariableDeclaration(parent)) {
-          const varName = parent.name;
-          if (ts.isIdentifier(varName)) {
-            // If the function name matches the variable name, this is likely it
-            if (functionName === varName.text) {
-              return node;
-            }
-          }
-        }
-        // For anonymous functions or when name doesn't match, return the first one near target
-        if (!functionName) {
-          return node;
-        }
-      }
+    const functionExpr = matchesFunctionExpression(node);
+    if (functionExpr) {
+      return functionExpr;
     }
 
     return ts.forEachChild(node, visit) || null;

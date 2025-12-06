@@ -4,20 +4,19 @@ alwaysApply: true
 
 ## Development Rules
 
-- Always make sure linting succeeds
+## Always make sure linting succeeds.  Fix any linting errors AND warnings
 ```
 npm run check
 ```
 
-- Always make sure tests succeed (Do not modify tests without direct instruction to do so)
+## Always run tests
 ```
 npm run test
 ```
 
 - Add tests into the tests/ directory
 
-- This project needs to be built using jsii, so always make sure it builds.  Additionally all interfaces need
-to be compatible with jsii
+## always make sure the jsii build succeeds
 ```
 npm run build:python
 ```

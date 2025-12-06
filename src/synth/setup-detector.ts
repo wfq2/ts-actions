@@ -54,58 +54,72 @@ export function detectRequiredSetupActions(workflow: Workflow): SetupAction[] {
 }
 
 /**
- * Add required setup actions to jobs in a workflow.
- * Adds them as the first step in each job that needs them.
+ * Check if a job needs Node.js setup and return the required version.
  */
-export function addSetupActionsToWorkflow(workflow: Workflow): void {
-  const setupActions = detectRequiredSetupActions(workflow);
+function getNodeSetupRequirement(stepInstances: Step[]): {
+  needsNode: boolean;
+  nodeVersion: string;
+} {
+  let needsNode = false;
+  let nodeVersion = "24";
 
-  if (setupActions.length === 0) {
-    return; // No setup actions needed
+  for (const step of stepInstances) {
+    const tsFunction = step._getTypeScriptFunction();
+    if (tsFunction) {
+      needsNode = true;
+      nodeVersion = tsFunction.options?.nodeVersion || "24";
+    }
   }
 
+  return { needsNode, nodeVersion };
+}
+
+/**
+ * Check if a job already has setup-node action configured.
+ */
+function hasSetupNode(stepInstances: Step[]): boolean {
+  for (const step of stepInstances) {
+    const stepJson = step.toJSON();
+    if (stepJson.uses?.includes("actions/setup-node")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Create setup steps for a job that needs them.
+ */
+function createSetupSteps(needsNode: boolean, hasSetupNode: boolean, nodeVersion: string): Step[] {
+  const newSteps: Step[] = [];
+
+  if (needsNode && !hasSetupNode) {
+    const setupNodeAction: IActionClassType = { reference: "actions/setup-node@v4" };
+    const setupNodeStep = new Step()
+      .name("Setup Node.js")
+      .uses(setupNodeAction)
+      .with({ "node-version": nodeVersion });
+    newSteps.push(setupNodeStep);
+  }
+
+  return newSteps;
+}
+
+/**
+ * Add required setup actions to jobs in a workflow.
+ * Adds them as the first step in each job that needs them.
+ * This function checks each job individually to avoid duplicating setup actions
+ * that are already manually added by the user.
+ */
+export function addSetupActionsToWorkflow(workflow: Workflow): void {
   const jobInstances = workflow._getJobInstances();
 
   for (const [, job] of jobInstances.entries()) {
     const stepInstances = job._getStepInstances();
+    const { needsNode, nodeVersion } = getNodeSetupRequirement(stepInstances);
+    const jobHasSetupNode = hasSetupNode(stepInstances);
+    const newSteps = createSetupSteps(needsNode, jobHasSetupNode, nodeVersion);
 
-    // Check if job needs setup actions
-    let needsNode = false;
-    let nodeVersion = "24";
-
-    for (const step of stepInstances) {
-      const tsFunction = step._getTypeScriptFunction();
-      if (tsFunction) {
-        needsNode = true;
-        nodeVersion = tsFunction.options?.nodeVersion || "24";
-      }
-    }
-
-    // Check if setup actions are already present
-    let hasSetupNode = false;
-
-    for (const step of stepInstances) {
-      const stepJson = step.toJSON();
-      if (stepJson.uses) {
-        if (stepJson.uses.includes("actions/setup-node")) {
-          hasSetupNode = true;
-        }
-      }
-    }
-
-    // Add missing setup actions at the beginning
-    const newSteps: Step[] = [];
-
-    if (needsNode && !hasSetupNode) {
-      const setupNodeAction: IActionClassType = { reference: "actions/setup-node@v4" };
-      const setupNodeStep = new Step()
-        .name("Setup Node.js")
-        .uses(setupNodeAction)
-        .with({ "node-version": nodeVersion });
-      newSteps.push(setupNodeStep);
-    }
-
-    // Prepend setup steps
     if (newSteps.length > 0) {
       job._setStepInstances([...newSteps, ...stepInstances]);
     }

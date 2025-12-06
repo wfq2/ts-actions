@@ -12,12 +12,17 @@ import { jobOutputsWorkflow } from "./workflows/job-outputs.js";
 import { nodeTestWorkflow } from "./workflows/node-test.js";
 import { simpleCIWorkflow } from "./workflows/simple-ci.js";
 import { simpleDeployWorkflow } from "./workflows/simple-deploy.js";
+import { simpleTypeScriptFunctionWorkflow } from "./workflows/simple-typescript-function.js";
 import { typescriptFunctionWorkflow } from "./workflows/typescript-function.js";
 
 const TEST_OUTPUT_DIR = join(process.cwd(), "tests", "output");
 
 const INVALID_STEP_ERROR_REGEX =
   /Invalid step: a step cannot have both 'uses' and 'run' properties/;
+
+// Regex patterns (moved to top level for performance)
+const RUN_BLOCK_REGEX = /run:\s*>-?\s*node\s*<<[^>]+>\s*([\s\S]*?)TS_ACTIONS_EOF/;
+const EXPORT_STATEMENT_REGEX = /^\s*export\s+/m;
 
 // Clean up test output directory before tests
 if (existsSync(TEST_OUTPUT_DIR)) {
@@ -267,4 +272,98 @@ test("synthesize workflow with TypeScript function", async () => {
     "Should contain TypeScript function step name"
   );
   ok(yamlContent.includes("run:"), "Should contain run property for TypeScript function");
+
+  // Verify JavaScript bundling uses CommonJS format (not ES modules)
+  ok(
+    yamlContent.includes("module.exports"),
+    "Should use CommonJS module.exports instead of ES module export"
+  );
+  // Check that there are no standalone export statements in the run block
+  const runBlockMatch = yamlContent.match(RUN_BLOCK_REGEX);
+  if (runBlockMatch) {
+    const runCode = runBlockMatch[1];
+    ok(
+      !(runCode.includes("export default") || runCode.match(EXPORT_STATEMENT_REGEX)),
+      "Should not contain ES module export statements in the bundled code"
+    );
+  }
+
+  // Verify the function is correctly extracted (not the entire workflow builder)
+  // The extracted function should be processData with inputValue and threshold parameters
+  ok(
+    yamlContent.includes("inputValue") && yamlContent.includes("threshold"),
+    "Should contain the actual function parameters (inputValue, threshold), not the workflow builder"
+  );
+  // Verify it doesn't contain workflow builder code in the run block
+  const runBlockMatch2 = yamlContent.match(RUN_BLOCK_REGEX);
+  if (runBlockMatch2) {
+    const runCode = runBlockMatch2[1];
+    const hasWorkflowBuilder = runCode.includes("job.runsOn") || runCode.includes(".addStep(");
+    ok(
+      !hasWorkflowBuilder,
+      "Should not contain workflow builder code (job.runsOn, addStep) in the extracted function"
+    );
+  }
+
+  // Verify the code structure for execution
+  ok(
+    yamlContent.includes("const module = { exports: {} }") ||
+      yamlContent.includes("const module = { exports: {} }"),
+    "Should create module object for CommonJS compatibility"
+  );
+  ok(
+    yamlContent.includes("const fn = module.exports"),
+    "Should access function from module.exports for execution"
+  );
+  ok(
+    yamlContent.includes('fn("100", 50)') || yamlContent.includes('fn( "100" , 50 )'),
+    "Should call the function with the provided arguments"
+  );
+});
+
+test("synthesize workflow with simple anonymous TypeScript function", async () => {
+  await synthesize(simpleTypeScriptFunctionWorkflow, TEST_OUTPUT_DIR);
+
+  const expectedFile = join(TEST_OUTPUT_DIR, "simple-typescript-function-test.yml");
+  ok(existsSync(expectedFile), "Output file should exist");
+
+  const yamlContent = readFileSync(expectedFile, "utf-8");
+
+  // Verify CommonJS format is used
+  ok(
+    yamlContent.includes("module.exports"),
+    "Should use CommonJS module.exports for anonymous arrow functions"
+  );
+  ok(
+    yamlContent.includes("const module = { exports: {} }"),
+    "Should create module object for CommonJS compatibility"
+  );
+
+  // Verify the anonymous function is correctly extracted
+  // Should contain console.log("Hello, world!") but not the workflow builder
+  ok(
+    yamlContent.includes('console.log("Hello, world!")') ||
+      yamlContent.includes("console.log('Hello, world!')"),
+    "Should contain the actual function body (console.log)"
+  );
+  // Should not contain the entire workflow builder function in the run block
+  const runBlockMatch = yamlContent.match(RUN_BLOCK_REGEX);
+  if (runBlockMatch) {
+    const runCode = runBlockMatch[1];
+    const hasWorkflowBuilder = runCode.includes("job.runsOn") || runCode.includes(".addStep(");
+    ok(
+      !hasWorkflowBuilder,
+      "Should not contain workflow builder code (job.runsOn, addStep) in extracted anonymous function"
+    );
+  }
+
+  // Verify function execution structure
+  ok(
+    yamlContent.includes("const fn = module.exports"),
+    "Should access function from module.exports"
+  );
+  ok(
+    yamlContent.includes("fn()") || yamlContent.includes("await fn()"),
+    "Should call the function (anonymous function takes no args)"
+  );
 });

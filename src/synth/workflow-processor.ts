@@ -2,7 +2,7 @@ import { Step } from "../core/step.js";
 import type { IWorkflowConfig, TypeScriptFunction } from "../core/types.js";
 import type { Workflow } from "../core/workflow.js";
 import { extractTypeScriptFunction } from "./function-extractor.js";
-import { detectRequiredSetupActions } from "./setup-detector.js";
+import { addSetupActionsToWorkflow } from "./setup-detector.js";
 import { transpileTypeScriptFunction } from "./typescript-transpiler.js";
 
 /**
@@ -30,13 +30,9 @@ export function processWorkflow(workflow: Workflow): IWorkflowConfig {
  * This function processes TypeScript function steps and replaces them with regular run steps.
  */
 export async function processWorkflowSteps(workflow: Workflow): Promise<void> {
-  // Detect required setup actions (for documentation/warnings)
-  const requiredSetup = detectRequiredSetupActions(workflow);
-  if (requiredSetup.length > 0) {
-    console.warn(
-      `Note: This workflow may require setup actions: ${requiredSetup.map((s) => s.action).join(", ")}. Make sure to add them before function execution steps.`
-    );
-  }
+  // Automatically add required setup actions (e.g., setup-node for TypeScript functions)
+  // This will only add them if they're not already present in each job
+  addSetupActionsToWorkflow(workflow);
 
   const jobInstances = workflow._getJobInstances();
 
@@ -106,15 +102,27 @@ async function processTypeScriptStep(
 
   // Copy all step properties
   const stepJson = step.toJSON();
-  if (stepJson.name) newStep.name(stepJson.name);
-  if (stepJson.id) newStep.id(stepJson.id);
-  if (stepJson.env) newStep.env(stepJson.env);
-  if (stepJson.if) newStep.if(stepJson.if);
+  if (stepJson.name) {
+    newStep.name(stepJson.name);
+  }
+  if (stepJson.id) {
+    newStep.id(stepJson.id);
+  }
+  if (stepJson.env) {
+    newStep.env(stepJson.env);
+  }
+  if (stepJson.if) {
+    newStep.if(stepJson.if);
+  }
   if (stepJson["continue-on-error"]) {
     newStep.continueOnError(stepJson["continue-on-error"]);
   }
-  if (stepJson["timeout-minutes"]) newStep.timeoutMinutes(stepJson["timeout-minutes"]);
-  if (stepJson["working-directory"]) newStep.workingDirectory(stepJson["working-directory"]);
+  if (stepJson["timeout-minutes"]) {
+    newStep.timeoutMinutes(stepJson["timeout-minutes"]);
+  }
+  if (stepJson["working-directory"]) {
+    newStep.workingDirectory(stepJson["working-directory"]);
+  }
 
   // Set environment variables for GitHub expression arguments
   const envVars: Record<string, string> = { ...(stepJson.env || {}) };

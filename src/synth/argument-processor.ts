@@ -18,6 +18,25 @@ export function isGitHubExpression(value: unknown): value is GitHubExpression {
 }
 
 /**
+ * Serialize a non-expression argument value to code string.
+ */
+function serializeArgument(
+  arg: string | number | boolean,
+  language: "typescript" | "python"
+): string {
+  if (typeof arg === "string") {
+    return JSON.stringify(arg);
+  }
+  if (typeof arg === "number") {
+    return String(arg);
+  }
+  if (typeof arg === "boolean") {
+    return language === "typescript" ? String(arg) : arg ? "True" : "False";
+  }
+  return String(arg);
+}
+
+/**
  * Process function arguments for TypeScript/JavaScript execution.
  * Converts GitHub expressions to code that reads from environment variables.
  *
@@ -33,24 +52,7 @@ export function processArguments(
     if (isGitHubExpression(arg)) {
       return processGitHubExpression(arg, index, language);
     }
-
-    // For non-expression values, serialize them appropriately
-    if (typeof arg === "string") {
-      // Escape string for the target language
-      if (language === "typescript") {
-        return JSON.stringify(arg);
-      }
-      // Python
-      return JSON.stringify(arg);
-    }
-    if (typeof arg === "number") {
-      return String(arg);
-    }
-    if (typeof arg === "boolean") {
-      return language === "typescript" ? String(arg) : arg ? "True" : "False";
-    }
-
-    return String(arg);
+    return serializeArgument(arg, language);
   });
 }
 
