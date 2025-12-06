@@ -128,8 +128,25 @@ async function processTypeScriptStep(
     newStep.env(envVars);
   }
 
-  // Set the run command with transpiled code
-  newStep.run(transpiled.code);
+  // Set the run command with transpiled code wrapped in Node.js execution
+  // Use heredoc to properly handle multi-line JavaScript code in shell
+  const wrappedCode = wrapJavaScriptForShell(transpiled.code);
+  newStep.run(wrappedCode);
 
   return newStep;
+}
+
+/**
+ * Wrap JavaScript code for execution in a shell script.
+ * Uses a heredoc to pass the code to Node.js, which properly handles
+ * multi-line code and special characters.
+ */
+function wrapJavaScriptForShell(jsCode: string): string {
+  // Use heredoc with a fixed delimiter that's unlikely to appear in user code
+  // The single quotes around the delimiter prevent variable expansion
+  const delimiter = "TS_ACTIONS_EOF";
+
+  return `node << '${delimiter}'
+${jsCode}
+${delimiter}`;
 }

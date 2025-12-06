@@ -23,6 +23,8 @@ jobs:
         run: npm run test
       - name: Run TypeScript function
         run: >-
+          node << 'TS_ACTIONS_EOF'
+
           // Enhanced error handling with source map support
 
           const originalError = Error;
@@ -99,3 +101,5 @@ jobs:
             }
             process.exit(1);
           }
+
+          TS_ACTIONS_EOF
