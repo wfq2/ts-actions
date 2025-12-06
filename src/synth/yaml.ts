@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stringify } from "yaml";
 import type { Workflow } from "../core/workflow.js";
+import { processWorkflowSteps } from "./workflow-processor.js";
 
 /**
  * Synthesizes a workflow to a YAML file.
@@ -9,8 +10,12 @@ import type { Workflow } from "../core/workflow.js";
  * @param workflow - The workflow to synthesize
  * @param outputDir - The output directory (default: "dist")
  * @stability stable
+ * @jsii ignore
  */
-export function synthesize(workflow: Workflow, outputDir = "dist"): void {
+export async function synthesize(workflow: Workflow, outputDir = "dist"): Promise<void> {
+  // Process TypeScript/Python function steps before converting to JSON
+  await processWorkflowSteps(workflow);
+
   const config = workflow.toJSON();
   const yamlContent = stringify(config, {
     indent: 2,
@@ -35,17 +40,21 @@ export function synthesize(workflow: Workflow, outputDir = "dist"): void {
  * @param workflows - Array of workflows with optional filenames
  * @param outputDir - The output directory (default: "dist")
  * @stability stable
+ * @jsii ignore
  */
-export function synthesizeMultiple(
+export async function synthesizeMultiple(
   workflows: Array<{ workflow: Workflow; filename?: string }>,
   outputDir = "dist"
-): void {
+): Promise<void> {
   // Ensure output directory exists
   if (!existsSync(outputDir)) {
     mkdirSync(outputDir, { recursive: true });
   }
 
   for (const { workflow, filename } of workflows) {
+    // Process TypeScript/Python function steps before converting to JSON
+    await processWorkflowSteps(workflow);
+
     const config = workflow.toJSON();
     const yamlContent = stringify(config, {
       indent: 2,

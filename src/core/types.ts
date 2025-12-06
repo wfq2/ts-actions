@@ -285,3 +285,64 @@ export interface IWorkflowConfig {
 
 // Type alias for backward compatibility
 export type WorkflowConfig = IWorkflowConfig;
+
+/**
+ * A string that represents a GitHub Actions expression (e.g., "${{ steps.id.outputs.value }}")
+ * @stability stable
+ */
+export type GitHubExpression = string;
+
+/**
+ * Options for TypeScript step execution
+ * @stability stable
+ */
+export interface ITypeScriptStepOptions {
+  /** Node.js version to use (default: "24") */
+  nodeVersion?: string;
+}
+
+/**
+ * Options for Python step execution
+ * @stability stable
+ */
+export interface IPythonStepOptions {
+  /** Python version to use (default: "3.13") */
+  pythonVersion?: string;
+}
+
+// Type aliases for backward compatibility
+export type TypeScriptStepOptions = ITypeScriptStepOptions;
+export type PythonStepOptions = IPythonStepOptions;
+
+/**
+ * Internal marker for TypeScript function steps
+ * @internal
+ */
+export interface ITypeScriptFunctionStep {
+  /** @internal */
+  "__ts-actions-type"?: "typescript-function";
+  /** @internal */
+  "__ts-actions-function"?: Function;
+  /** @internal */
+  "__ts-actions-args"?: Array<string | number | boolean | GitHubExpression>;
+  /** @internal */
+  "__ts-actions-options"?: ITypeScriptStepOptions;
+}
+
+/**
+ * Internal marker for Python function steps
+ * @internal
+ */
+export interface IPythonFunctionStep {
+  /** @internal */
+  "__ts-actions-type"?: "python-function";
+  /** @internal */
+  "__ts-actions-function"?: Function;
+  /** @internal */
+  "__ts-actions-args"?: Array<string | number | boolean | GitHubExpression>;
+  /** @internal */
+  "__ts-actions-options"?: IPythonStepOptions;
+}
+
+// Extend IStep to include internal markers (using intersection types in implementation)
+export type IStepWithFunction = IStep & (ITypeScriptFunctionStep | IPythonFunctionStep);

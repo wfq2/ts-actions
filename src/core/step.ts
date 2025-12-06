@@ -1,6 +1,7 @@
 import { loadActionType } from "../actions/loader.js";
 import { parseActionReference } from "../actions/parser.js";
 import type { IActionClassType } from "../actions/types.js";
+import type { GitHubExpression, IPythonStepOptions, ITypeScriptStepOptions } from "./types.js";
 import type { IStep } from "./types.js";
 
 /**
@@ -11,6 +12,13 @@ import type { IStep } from "./types.js";
 export class Step {
   private step: IStep;
   private currentActionRef: string | null = null;
+  // Internal storage for TypeScript/Python function steps
+  private typescriptFunction: Function | null = null;
+  private typescriptArgs: Array<string | number | boolean | GitHubExpression> = [];
+  private typescriptOptions: ITypeScriptStepOptions | undefined;
+  private pythonFunction: Function | null = null;
+  private pythonArgs: Array<string | number | boolean | GitHubExpression> = [];
+  private pythonOptions: IPythonStepOptions | undefined;
 
   /**
    * Creates a new step.
@@ -72,6 +80,145 @@ export class Step {
     // Clear uses and with properties since a step cannot have both uses and run
     this.step.uses = undefined;
     this.step.with = undefined;
+    // Clear function references
+    this.typescriptFunction = null;
+    this.typescriptArgs = [];
+    this.pythonFunction = null;
+    this.pythonArgs = [];
+    return this;
+  }
+
+  /**
+   * Runs a TypeScript function in this step.
+   * The function source will be extracted and transpiled during synthesis.
+   *
+   * @param fn - The TypeScript function to execute
+   * @param options - Optional configuration (Node.js version)
+   * @param args - Arguments to pass to the function (can include GitHub Actions expressions)
+   * @stability stable
+   * @jsii ignore
+   */
+  runTypeScript(
+    fn: Function,
+    options?: ITypeScriptStepOptions,
+    ...args: Array<string | number | boolean | GitHubExpression>
+  ): this;
+  /**
+   * Runs a TypeScript function in this step.
+   * The function source will be extracted and transpiled during synthesis.
+   *
+   * @param fn - The TypeScript function to execute
+   * @param args - Arguments to pass to the function (can include GitHub Actions expressions)
+   * @stability stable
+   * @jsii ignore
+   */
+  runTypeScript(fn: Function, ...args: Array<string | number | boolean | GitHubExpression>): this;
+  runTypeScript(
+    fn: Function,
+    optionsOrArg?: ITypeScriptStepOptions | string | number | boolean | GitHubExpression,
+    ...restArgs: Array<string | number | boolean | GitHubExpression>
+  ): this {
+    // Check if first argument is options object
+    let options: ITypeScriptStepOptions | undefined;
+    let args: Array<string | number | boolean | GitHubExpression>;
+
+    const isOptionsObject = (value: unknown): value is ITypeScriptStepOptions => {
+      return (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        ("nodeVersion" in value || Object.keys(value).length === 0)
+      );
+    };
+
+    if (optionsOrArg !== undefined && isOptionsObject(optionsOrArg)) {
+      options = optionsOrArg;
+      args = restArgs;
+    } else {
+      options = undefined;
+      args =
+        optionsOrArg !== undefined
+          ? ([optionsOrArg, ...restArgs] as Array<string | number | boolean | GitHubExpression>)
+          : restArgs;
+    }
+
+    this.typescriptFunction = fn;
+    this.typescriptArgs = args;
+    this.typescriptOptions = options;
+    // Clear other step types
+    this.step.run = undefined;
+    this.step.uses = undefined;
+    this.step.with = undefined;
+    this.currentActionRef = null;
+    this.pythonFunction = null;
+    this.pythonArgs = [];
+    return this;
+  }
+
+  /**
+   * Runs a Python function in this step.
+   * The function source will be extracted and processed during synthesis.
+   *
+   * @param fn - The Python function to execute
+   * @param options - Optional configuration (Python version)
+   * @param args - Arguments to pass to the function (can include GitHub Actions expressions)
+   * @stability stable
+   * @jsii ignore
+   */
+  runPython(
+    fn: Function,
+    options?: IPythonStepOptions,
+    ...args: Array<string | number | boolean | GitHubExpression>
+  ): this;
+  /**
+   * Runs a Python function in this step.
+   * The function source will be extracted and processed during synthesis.
+   *
+   * @param fn - The Python function to execute
+   * @param args - Arguments to pass to the function (can include GitHub Actions expressions)
+   * @stability stable
+   * @jsii ignore
+   */
+  runPython(fn: Function, ...args: Array<string | number | boolean | GitHubExpression>): this;
+  runPython(
+    fn: Function,
+    optionsOrArg?: IPythonStepOptions | string | number | boolean | GitHubExpression,
+    ...restArgs: Array<string | number | boolean | GitHubExpression>
+  ): this {
+    // Check if first argument is options object
+    let options: IPythonStepOptions | undefined;
+    let args: Array<string | number | boolean | GitHubExpression>;
+
+    const isOptionsObject = (value: unknown): value is IPythonStepOptions => {
+      return (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        ("pythonVersion" in value || Object.keys(value).length === 0)
+      );
+    };
+
+    if (optionsOrArg !== undefined && isOptionsObject(optionsOrArg)) {
+      options = optionsOrArg;
+      args = restArgs;
+    } else {
+      options = undefined;
+      args =
+        optionsOrArg !== undefined
+          ? ([optionsOrArg, ...restArgs] as Array<string | number | boolean | GitHubExpression>)
+          : restArgs;
+    }
+
+    this.pythonFunction = fn;
+    this.pythonArgs = args;
+    this.pythonOptions = options;
+    // Clear other step types
+    this.step.run = undefined;
+    this.step.uses = undefined;
+    this.step.with = undefined;
+    this.currentActionRef = null;
+    this.typescriptFunction = null;
+    this.typescriptArgs = [];
     return this;
   }
 
@@ -205,6 +352,44 @@ export class Step {
   workingDirectory(directory: string): this {
     this.step["working-directory"] = directory;
     return this;
+  }
+
+  /**
+   * Gets TypeScript function data if this step uses TypeScript.
+   * @internal
+   */
+  _getTypeScriptFunction(): {
+    fn: Function;
+    args: Array<string | number | boolean | GitHubExpression>;
+    options?: ITypeScriptStepOptions;
+  } | null {
+    if (this.typescriptFunction) {
+      return {
+        fn: this.typescriptFunction,
+        args: this.typescriptArgs,
+        options: this.typescriptOptions,
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Gets Python function data if this step uses Python.
+   * @internal
+   */
+  _getPythonFunction(): {
+    fn: Function;
+    args: Array<string | number | boolean | GitHubExpression>;
+    options?: IPythonStepOptions;
+  } | null {
+    if (this.pythonFunction) {
+      return {
+        fn: this.pythonFunction,
+        args: this.pythonArgs,
+        options: this.pythonOptions,
+      };
+    }
+    return null;
   }
 
   /**

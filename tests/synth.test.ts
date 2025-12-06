@@ -10,8 +10,10 @@ import { arrayStepsWorkflow } from "./workflows/array-steps.js";
 import { invalidStep } from "./workflows/invalid-step.js";
 import { jobOutputsWorkflow } from "./workflows/job-outputs.js";
 import { nodeTestWorkflow } from "./workflows/node-test.js";
+import { pythonFunctionWorkflow } from "./workflows/python-function.js";
 import { simpleCIWorkflow } from "./workflows/simple-ci.js";
 import { simpleDeployWorkflow } from "./workflows/simple-deploy.js";
+import { typescriptFunctionWorkflow } from "./workflows/typescript-function.js";
 
 const TEST_OUTPUT_DIR = join(process.cwd(), "tests", "output");
 
@@ -23,8 +25,8 @@ if (existsSync(TEST_OUTPUT_DIR)) {
   rmSync(TEST_OUTPUT_DIR, { recursive: true, force: true });
 }
 
-test("synthesize simple CI workflow", () => {
-  synthesize(simpleCIWorkflow, TEST_OUTPUT_DIR);
+test("synthesize simple CI workflow", async () => {
+  await synthesize(simpleCIWorkflow, TEST_OUTPUT_DIR);
 
   const expectedFile = join(TEST_OUTPUT_DIR, "simple-ci.yml");
   ok(existsSync(expectedFile), "Output file should exist");
@@ -46,8 +48,8 @@ test("synthesize simple CI workflow", () => {
   ok(yamlContent.includes("npm test"), "Should contain test command");
 });
 
-test("synthesize simple Deploy workflow", () => {
-  synthesize(simpleDeployWorkflow, TEST_OUTPUT_DIR);
+test("synthesize simple Deploy workflow", async () => {
+  await synthesize(simpleDeployWorkflow, TEST_OUTPUT_DIR);
 
   const expectedFile = join(TEST_OUTPUT_DIR, "simple-deploy.yml");
   ok(existsSync(expectedFile), "Output file should exist");
@@ -65,8 +67,8 @@ test("synthesize simple Deploy workflow", () => {
   ok(yamlContent.includes("echo 'Deploying application'"), "Should contain deploy command");
 });
 
-test("synthesize Node Test workflow", () => {
-  synthesize(nodeTestWorkflow, TEST_OUTPUT_DIR);
+test("synthesize Node Test workflow", async () => {
+  await synthesize(nodeTestWorkflow, TEST_OUTPUT_DIR);
 
   const expectedFile = join(TEST_OUTPUT_DIR, "node-test.yml");
   ok(existsSync(expectedFile), "Output file should exist");
@@ -95,14 +97,14 @@ test("synthesize Node Test workflow", () => {
   ok(yamlContent.includes("npm run test"), "Should contain npm run test command");
 });
 
-test("exported step with both uses and run should only have run (last called)", () => {
+test("exported step with both uses and run should only have run (last called)", async () => {
   // Test that when a step function calls both uses and run, only the last one is kept
   const workflow = new Workflow("Test Invalid Step")
     .onPush({ branches: ["main"] })
     .addJob("test", (job) => job.runsOn("ubuntu-latest").addStep(invalidStep));
 
   // Should not throw - the fix prevents the issue by clearing conflicting properties
-  synthesize(workflow, TEST_OUTPUT_DIR);
+  await synthesize(workflow, TEST_OUTPUT_DIR);
 
   const expectedFile = join(TEST_OUTPUT_DIR, "test-invalid-step.yml");
   ok(existsSync(expectedFile), "Output file should exist");
@@ -156,8 +158,8 @@ test("step with both uses and run set directly should throw error in toJSON", ()
   );
 });
 
-test("combine array of steps into a job", () => {
-  synthesize(arrayStepsWorkflow, TEST_OUTPUT_DIR);
+test("combine array of steps into a job", async () => {
+  await synthesize(arrayStepsWorkflow, TEST_OUTPUT_DIR);
 
   const expectedFile = join(TEST_OUTPUT_DIR, "array-steps-test.yml");
   ok(existsSync(expectedFile), "Output file should exist");
@@ -192,8 +194,8 @@ test("combine array of steps into a job", () => {
   ok(yamlContent.includes("npm test"), "Should contain npm test command");
 });
 
-test("synthesize workflow with job outputs and dependencies", () => {
-  synthesize(jobOutputsWorkflow, TEST_OUTPUT_DIR);
+test("synthesize workflow with job outputs and dependencies", async () => {
+  await synthesize(jobOutputsWorkflow, TEST_OUTPUT_DIR);
 
   const expectedFile = join(TEST_OUTPUT_DIR, "job-outputs-test.yml");
   ok(existsSync(expectedFile), "Output file should exist");
@@ -240,4 +242,53 @@ test("synthesize workflow with job outputs and dependencies", () => {
     "Should contain environment variable using first job output"
   );
   ok(yamlContent.includes("Use output from first job"), "Should contain step that uses the output");
+});
+
+test("synthesize workflow with TypeScript function", async () => {
+  await synthesize(typescriptFunctionWorkflow, TEST_OUTPUT_DIR);
+
+  const expectedFile = join(TEST_OUTPUT_DIR, "typescript-function-test.yml");
+  ok(existsSync(expectedFile), "Output file should exist");
+
+  const yamlContent = readFileSync(expectedFile, "utf-8");
+
+  // Assert key components of the YAML
+  ok(yamlContent.includes("name: TypeScript Function Test"), "Should contain workflow name");
+  ok(yamlContent.includes("on:"), "Should contain 'on' trigger");
+  ok(yamlContent.includes("push:"), "Should contain push trigger");
+  ok(yamlContent.includes("branches:"), "Should contain branches");
+  ok(yamlContent.includes("- main"), "Should contain main branch");
+  ok(yamlContent.includes("jobs:"), "Should contain jobs");
+  ok(yamlContent.includes("test:"), "Should contain test job");
+  ok(yamlContent.includes("runs-on: ubuntu-latest"), "Should contain runs-on");
+  ok(yamlContent.includes("Checkout code"), "Should contain checkout step name");
+  ok(yamlContent.includes("actions/checkout@v4"), "Should contain checkout action");
+  ok(
+    yamlContent.includes("Run TypeScript function"),
+    "Should contain TypeScript function step name"
+  );
+  ok(yamlContent.includes("run:"), "Should contain run property for TypeScript function");
+});
+
+test("synthesize workflow with Python function", async () => {
+  await synthesize(pythonFunctionWorkflow, TEST_OUTPUT_DIR);
+
+  const expectedFile = join(TEST_OUTPUT_DIR, "python-function-test.yml");
+  ok(existsSync(expectedFile), "Output file should exist");
+
+  const yamlContent = readFileSync(expectedFile, "utf-8");
+
+  // Assert key components of the YAML
+  ok(yamlContent.includes("name: Python Function Test"), "Should contain workflow name");
+  ok(yamlContent.includes("on:"), "Should contain 'on' trigger");
+  ok(yamlContent.includes("push:"), "Should contain push trigger");
+  ok(yamlContent.includes("branches:"), "Should contain branches");
+  ok(yamlContent.includes("- main"), "Should contain main branch");
+  ok(yamlContent.includes("jobs:"), "Should contain jobs");
+  ok(yamlContent.includes("test:"), "Should contain test job");
+  ok(yamlContent.includes("runs-on: ubuntu-latest"), "Should contain runs-on");
+  ok(yamlContent.includes("Checkout code"), "Should contain checkout step name");
+  ok(yamlContent.includes("actions/checkout@v4"), "Should contain checkout action");
+  ok(yamlContent.includes("Run Python function"), "Should contain Python function step name");
+  ok(yamlContent.includes("run:"), "Should contain run property for Python function");
 });

@@ -9,6 +9,7 @@ import type { IJob, IJobConcurrency, IJobDefaults, IJobStrategy, JobId, Runner }
  */
 export class Job<TOutputs extends Record<string, string> = Record<string, never>> {
   private job: IJob;
+  private stepInstances: Step[] = []; // Store Step instances for processing
   public id?: JobId;
 
   /**
@@ -40,6 +41,7 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
    *
    * @param dependencies - Job reference(s) or job ID(s) that this job depends on
    * @stability stable
+   * @jsii ignore
    */
   needs(
     dependencies:
@@ -47,11 +49,31 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
       | JobOutputsRef<Record<string, unknown>>[]
       | JobId
       | JobId[]
+  ): this;
+  /**
+   * Sets job dependencies.
+   *
+   * @param dependencies - Job reference(s) or job ID(s) that this job depends on
+   * @stability stable
+   */
+  needs(
+    dependencies: JobId | JobId[] | string | string[] | JobOutputsRef<any> | JobOutputsRef<any>[]
   ): this {
+    // Handle both JobOutputsRef and plain strings
     if (Array.isArray(dependencies)) {
-      this.job.needs = dependencies.map((dep) => (typeof dep === "string" ? dep : dep.id));
+      this.job.needs = dependencies.map((dep) => {
+        if (typeof dep === "string") return dep;
+        if (dep && typeof dep === "object" && "id" in dep) {
+          return (dep as JobOutputsRef<any>).id;
+        }
+        return String(dep);
+      });
+    } else if (typeof dependencies === "string") {
+      this.job.needs = dependencies;
+    } else if (dependencies && typeof dependencies === "object" && "id" in dependencies) {
+      this.job.needs = (dependencies as JobOutputsRef<any>).id;
     } else {
-      this.job.needs = typeof dependencies === "string" ? dependencies : dependencies.id;
+      this.job.needs = String(dependencies);
     }
     return this;
   }
@@ -94,19 +116,35 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
     if (Array.isArray(stepOrFnOrArray)) {
       for (const s of stepOrFnOrArray) {
         if (s instanceof Step) {
-          this.job.steps.push(s.toJSON());
+          this.stepInstances.push(s);
         } else {
           const stepInstance = new Step();
-          this.job.steps.push(s(stepInstance).toJSON());
+          this.stepInstances.push(s(stepInstance));
         }
       }
     } else if (stepOrFnOrArray instanceof Step) {
-      this.job.steps.push(stepOrFnOrArray.toJSON());
+      this.stepInstances.push(stepOrFnOrArray);
     } else {
       const stepInstance = new Step();
-      this.job.steps.push(stepOrFnOrArray(stepInstance).toJSON());
+      this.stepInstances.push(stepOrFnOrArray(stepInstance));
     }
     return this;
+  }
+
+  /**
+   * Get step instances for processing.
+   * @internal
+   */
+  _getStepInstances(): Step[] {
+    return this.stepInstances;
+  }
+
+  /**
+   * Replace step instances (used during processing).
+   * @internal
+   */
+  _setStepInstances(steps: Step[]): void {
+    this.stepInstances = steps;
   }
 
   /**
@@ -199,6 +237,8 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
    * @stability stable
    */
   toJSON(): IJob {
+    // Convert step instances to JSON
+    this.job.steps = this.stepInstances.map((step) => step.toJSON());
     return { ...this.job };
   }
 }

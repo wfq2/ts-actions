@@ -6,12 +6,14 @@ import { testWorkflow } from "./test.js";
 const OUTPUT_DIR = join(process.cwd(), ".github", "workflows");
 
 // Synthesize all workflows
-synthesizeMultiple(
-  [
-    { workflow: testWorkflow, filename: "test.yml" },
-    { workflow: lintWorkflow, filename: "lint.yml" },
-  ],
-  OUTPUT_DIR
-);
+(async () => {
+  await synthesizeMultiple(
+    [
+      { workflow: testWorkflow, filename: "test.yml" },
+      { workflow: lintWorkflow, filename: "lint.yml" },
+    ],
+    OUTPUT_DIR
+  );
 
-console.log(`✓ Synthesized workflows to ${OUTPUT_DIR}`);
+  console.log(`✓ Synthesized workflows to ${OUTPUT_DIR}`);
+})();

@@ -28,7 +28,8 @@
     "format": "biome format --write .",
     "check": "biome check --write .",
     "synth": "tsx src/cli/synth.ts",
-    "test": "tsx tests/synth.test.ts"
+    "test": "tsx tests/synth.test.ts",
+    "synth:workflows": "tsx .github/workflows-src/synth.ts"
   },
   "keywords": ["github-actions", "workflows", "typescript", "cdk"],
   "author": {
@@ -42,9 +43,13 @@
   "type": "commonjs",
   "dependencies": {
     "commander": "^12.1.0",
+    "typescript": "^5.7.2",
     "yaml": "^2.6.1"
   },
-  "bundledDependencies": ["commander", "yaml"],
+  "bundledDependencies": ["commander", "yaml", "typescript"],
+  "optionalDependencies": {
+    "esbuild": "^0.19.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@jsii/spec": "^1.95.0",
@@ -52,7 +57,6 @@
     "jsii": "^5.4.0",
     "jsii-pacmak": "^1.95.0",
     "jsii-rosetta": "^5.4.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "tsx": "^4.19.2"
   }
 }

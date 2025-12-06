@@ -22,6 +22,7 @@ export type WorkflowTrigger = IWorkflowTrigger;
  */
 export class Workflow {
   private config: IWorkflowConfig;
+  private jobInstances: Map<JobId, Job> = new Map(); // Store Job instances for processing
 
   /**
    * Creates a new workflow.
@@ -153,13 +154,22 @@ export class Workflow {
   ): this {
     if (jobOrFn instanceof Job) {
       jobOrFn.id = jobId;
-      this.config.jobs[jobId] = jobOrFn.toJSON();
+      this.jobInstances.set(jobId, jobOrFn);
     } else {
       const jobInstance = new Job<Record<string, never>>("ubuntu-latest");
       jobInstance.id = jobId;
-      this.config.jobs[jobId] = jobOrFn(jobInstance).toJSON();
+      const configuredJob = jobOrFn(jobInstance);
+      this.jobInstances.set(jobId, configuredJob);
     }
     return this;
+  }
+
+  /**
+   * Get job instances for processing.
+   * @internal
+   */
+  _getJobInstances(): Map<JobId, Job> {
+    return this.jobInstances;
   }
 
   /**
@@ -213,6 +223,12 @@ export class Workflow {
    * @stability stable
    */
   toJSON(): IWorkflowConfig {
+    // Convert job instances to JSON
+    const jobs: Record<string, ReturnType<Job["toJSON"]>> = {};
+    for (const [jobId, job] of this.jobInstances.entries()) {
+      jobs[jobId] = job.toJSON();
+    }
+    this.config.jobs = jobs;
     return { ...this.config };
   }
 }
