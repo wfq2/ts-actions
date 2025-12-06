@@ -288,9 +288,24 @@ export type WorkflowConfig = IWorkflowConfig;
 
 /**
  * A string that represents a GitHub Actions expression (e.g., "${{ steps.id.outputs.value }}")
+ * Using a branded type to prevent automatic widening in union types.
  * @stability stable
  */
-export type GitHubExpression = string;
+export type GitHubExpression = string & { readonly __brand: unique symbol };
+
+/**
+ * Helper function to create a GitHubExpression from a string.
+ * Use this when you need to pass a GitHub Actions expression to a function parameter.
+ *
+ * @example
+ * ```typescript
+ * step.runTypeScript(myFunc, "value", expr("${{ steps.id.outputs.value }}"))
+ * ```
+ * @stability stable
+ */
+export function expr(value: string): GitHubExpression {
+  return value as GitHubExpression;
+}
 
 /**
  * Options for TypeScript step execution
@@ -305,10 +320,36 @@ export interface ITypeScriptStepOptions {
 export type TypeScriptStepOptions = ITypeScriptStepOptions;
 
 /**
- * Type for TypeScript functions that can be executed in workflow steps
+ * Type for TypeScript functions that can be executed in workflow steps.
+ * Accepts any function signature to allow users to specify specific input/output types.
  * @internal
  */
-export type TypeScriptFunction = (...args: unknown[]) => unknown;
+// biome-ignore lint/suspicious/noExplicitAny: Intentional use of any to accept any function signature
+export type TypeScriptFunction = (...args: any[]) => any;
+
+/**
+ * Helper type that allows a parameter type or GitHubExpression.
+ * Since GitHubExpression is a branded type, regular strings won't be assignable
+ * to non-string parameter types, providing better type safety.
+ * @internal
+ */
+type AllowedArgType<T> = T | GitHubExpression;
+
+/**
+ * Helper type to convert a tuple to rest parameters, allowing each element
+ * to be the original type or a GitHubExpression (only for string types).
+ * @internal
+ */
+type TupleToRestArgs<T extends readonly unknown[]> = T extends readonly [infer First, ...infer Rest]
+  ? [AllowedArgType<First>, ...TupleToRestArgs<Rest>]
+  : [];
+
+/**
+ * Helper type to validate that arguments match a function's parameter types.
+ * Each argument can be the original type or a GitHubExpression.
+ * @internal
+ */
+export type ValidatedTypeScriptArgs<T extends TypeScriptFunction> = TupleToRestArgs<Parameters<T>>;
 
 /**
  * Internal marker for TypeScript function steps

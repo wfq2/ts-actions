@@ -1,7 +1,12 @@
 import { loadActionType } from "../actions/loader.js";
 import { parseActionReference } from "../actions/parser.js";
 import type { IActionClassType } from "../actions/types.js";
-import type { GitHubExpression, ITypeScriptStepOptions, TypeScriptFunction } from "./types.js";
+import type {
+  GitHubExpression,
+  ITypeScriptStepOptions,
+  TypeScriptFunction,
+  ValidatedTypeScriptArgs,
+} from "./types.js";
 import type { IStep } from "./types.js";
 
 /**
@@ -94,10 +99,10 @@ export class Step {
    * @stability stable
    * @jsii ignore
    */
-  runTypeScript(
-    fn: TypeScriptFunction,
+  runTypeScript<T extends TypeScriptFunction>(
+    fn: T,
     options?: ITypeScriptStepOptions,
-    ...args: Array<string | number | boolean | GitHubExpression>
+    ...args: ValidatedTypeScriptArgs<T>
   ): this;
   /**
    * Runs a TypeScript function in this step.
@@ -108,10 +113,7 @@ export class Step {
    * @stability stable
    * @jsii ignore
    */
-  runTypeScript(
-    fn: TypeScriptFunction,
-    ...args: Array<string | number | boolean | GitHubExpression>
-  ): this;
+  runTypeScript<T extends TypeScriptFunction>(fn: T, ...args: ValidatedTypeScriptArgs<T>): this;
   runTypeScript(
     fn: TypeScriptFunction,
     optionsOrArg?: ITypeScriptStepOptions | string | number | boolean | GitHubExpression,
