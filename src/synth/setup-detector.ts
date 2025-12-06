@@ -1,3 +1,4 @@
+import type { IActionClassType } from "../actions/types.js";
 import { Step } from "../core/step.js";
 import type { Workflow } from "../core/workflow.js";
 
@@ -8,7 +9,7 @@ export interface SetupAction {
 }
 
 /**
- * Detect if workflow needs Node.js or Python setup actions.
+ * Detect if workflow needs Node.js setup actions.
  * Returns setup actions that should be added if not already present.
  */
 export function detectRequiredSetupActions(workflow: Workflow): SetupAction[] {
@@ -16,9 +17,7 @@ export function detectRequiredSetupActions(workflow: Workflow): SetupAction[] {
   const jobInstances = workflow._getJobInstances();
 
   let needsNode = false;
-  let needsPython = false;
   let nodeVersion = "24"; // Default
-  let pythonVersion = "3.13"; // Default
 
   // Check all jobs and steps
   for (const [, job] of jobInstances.entries()) {
@@ -32,21 +31,11 @@ export function detectRequiredSetupActions(workflow: Workflow): SetupAction[] {
         nodeVersion = tsFunction.options?.nodeVersion || "24";
       }
 
-      // Check for Python function
-      const pythonFunction = step._getPythonFunction();
-      if (pythonFunction) {
-        needsPython = true;
-        pythonVersion = pythonFunction.options?.pythonVersion || "3.13";
-      }
-
-      // Check if setup-node or setup-python is already used
+      // Check if setup-node is already used
       const stepJson = step.toJSON();
       if (stepJson.uses) {
         if (stepJson.uses.includes("actions/setup-node")) {
           needsNode = false; // Already present
-        }
-        if (stepJson.uses.includes("actions/setup-python")) {
-          needsPython = false; // Already present
         }
       }
     }
@@ -57,15 +46,6 @@ export function detectRequiredSetupActions(workflow: Workflow): SetupAction[] {
       action: "actions/setup-node@v4",
       with: {
         "node-version": nodeVersion,
-      },
-    });
-  }
-
-  if (needsPython) {
-    required.push({
-      action: "actions/setup-python@v5",
-      with: {
-        "python-version": pythonVersion,
       },
     });
   }
@@ -91,9 +71,7 @@ export function addSetupActionsToWorkflow(workflow: Workflow): void {
 
     // Check if job needs setup actions
     let needsNode = false;
-    let needsPython = false;
     let nodeVersion = "24";
-    let pythonVersion = "3.13";
 
     for (const step of stepInstances) {
       const tsFunction = step._getTypeScriptFunction();
@@ -101,26 +79,16 @@ export function addSetupActionsToWorkflow(workflow: Workflow): void {
         needsNode = true;
         nodeVersion = tsFunction.options?.nodeVersion || "24";
       }
-
-      const pythonFunction = step._getPythonFunction();
-      if (pythonFunction) {
-        needsPython = true;
-        pythonVersion = pythonFunction.options?.pythonVersion || "3.13";
-      }
     }
 
     // Check if setup actions are already present
     let hasSetupNode = false;
-    let hasSetupPython = false;
 
     for (const step of stepInstances) {
       const stepJson = step.toJSON();
       if (stepJson.uses) {
         if (stepJson.uses.includes("actions/setup-node")) {
           hasSetupNode = true;
-        }
-        if (stepJson.uses.includes("actions/setup-python")) {
-          hasSetupPython = true;
         }
       }
     }
@@ -129,19 +97,12 @@ export function addSetupActionsToWorkflow(workflow: Workflow): void {
     const newSteps: Step[] = [];
 
     if (needsNode && !hasSetupNode) {
+      const setupNodeAction: IActionClassType = { reference: "actions/setup-node@v4" };
       const setupNodeStep = new Step()
         .name("Setup Node.js")
-        .uses({ reference: "actions/setup-node@v4" } as any) // Type assertion needed
+        .uses(setupNodeAction)
         .with({ "node-version": nodeVersion });
       newSteps.push(setupNodeStep);
-    }
-
-    if (needsPython && !hasSetupPython) {
-      const setupPythonStep = new Step()
-        .name("Setup Python")
-        .uses({ reference: "actions/setup-python@v5" } as any) // Type assertion needed
-        .with({ "python-version": pythonVersion });
-      newSteps.push(setupPythonStep);
     }
 
     // Prepend setup steps

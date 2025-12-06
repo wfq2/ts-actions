@@ -1,20 +1,18 @@
 import { Step } from "../core/step.js";
-import type { IWorkflowConfig } from "../core/types.js";
+import type { IWorkflowConfig, TypeScriptFunction } from "../core/types.js";
 import type { Workflow } from "../core/workflow.js";
 import { extractTypeScriptFunction } from "./function-extractor.js";
-import { extractPythonFunction } from "./function-extractor.js";
-import { processPythonFunction } from "./python-processor.js";
 import { detectRequiredSetupActions } from "./setup-detector.js";
 import { transpileTypeScriptFunction } from "./typescript-transpiler.js";
 
 /**
- * Process a workflow to extract and transpile TypeScript/Python functions.
+ * Process a workflow to extract and transpile TypeScript functions.
  * This modifies the workflow in place, converting function steps to regular run steps.
  *
  * @param workflow - The workflow to process
  * @returns Processed workflow configuration
  */
-export async function processWorkflow(workflow: Workflow): Promise<IWorkflowConfig> {
+export function processWorkflow(workflow: Workflow): IWorkflowConfig {
   const config = workflow.toJSON();
 
   // We need to process steps before they're converted to JSON
@@ -29,15 +27,14 @@ export async function processWorkflow(workflow: Workflow): Promise<IWorkflowConf
 
 /**
  * Process steps in a workflow by traversing the workflow structure.
- * This function processes TypeScript/Python function steps and replaces them with regular run steps.
+ * This function processes TypeScript function steps and replaces them with regular run steps.
  */
 export async function processWorkflowSteps(workflow: Workflow): Promise<void> {
   // Detect required setup actions (for documentation/warnings)
   const requiredSetup = detectRequiredSetupActions(workflow);
   if (requiredSetup.length > 0) {
     console.warn(
-      `Note: This workflow may require setup actions: ${requiredSetup.map((s) => s.action).join(", ")}. ` +
-        "Make sure to add them before function execution steps."
+      `Note: This workflow may require setup actions: ${requiredSetup.map((s) => s.action).join(", ")}. Make sure to add them before function execution steps.`
     );
   }
 
@@ -63,7 +60,7 @@ export async function processWorkflowSteps(workflow: Workflow): Promise<void> {
 }
 
 /**
- * Process a single step that may contain TypeScript or Python functions.
+ * Process a single step that may contain TypeScript functions.
  * Returns a new step with the function code embedded as a run command.
  */
 export async function processStep(step: Step): Promise<Step | null> {
@@ -71,12 +68,6 @@ export async function processStep(step: Step): Promise<Step | null> {
   const tsFunction = step._getTypeScriptFunction();
   if (tsFunction) {
     return await processTypeScriptStep(step, tsFunction);
-  }
-
-  // Check for Python function
-  const pythonFunction = step._getPythonFunction();
-  if (pythonFunction) {
-    return await processPythonStep(step, pythonFunction);
   }
 
   // Not a function step, return as-is
@@ -89,13 +80,14 @@ export async function processStep(step: Step): Promise<Step | null> {
 async function processTypeScriptStep(
   step: Step,
   tsData: {
-    fn: Function;
+    fn: TypeScriptFunction;
     args: Array<string | number | boolean | import("../core/types.js").GitHubExpression>;
     options?: import("../core/types.js").ITypeScriptStepOptions;
+    stackTrace?: string;
   }
 ): Promise<Step> {
-  // Extract function source
-  const extracted = extractTypeScriptFunction(tsData.fn);
+  // Extract function source, using the captured stack trace if available
+  const extracted = extractTypeScriptFunction(tsData.fn, tsData.stackTrace);
 
   if (!extracted) {
     throw new Error(
@@ -118,7 +110,9 @@ async function processTypeScriptStep(
   if (stepJson.id) newStep.id(stepJson.id);
   if (stepJson.env) newStep.env(stepJson.env);
   if (stepJson.if) newStep.if(stepJson.if);
-  if (stepJson["continue-on-error"]) newStep.continueOnError(stepJson["continue-on-error"]);
+  if (stepJson["continue-on-error"]) {
+    newStep.continueOnError(stepJson["continue-on-error"]);
+  }
   if (stepJson["timeout-minutes"]) newStep.timeoutMinutes(stepJson["timeout-minutes"]);
   if (stepJson["working-directory"]) newStep.workingDirectory(stepJson["working-directory"]);
 
@@ -136,62 +130,6 @@ async function processTypeScriptStep(
 
   // Set the run command with transpiled code
   newStep.run(transpiled.code);
-
-  return newStep;
-}
-
-/**
- * Process a Python function step.
- */
-async function processPythonStep(
-  step: Step,
-  pythonData: {
-    fn: Function;
-    args: Array<string | number | boolean | import("../core/types.js").GitHubExpression>;
-    options?: import("../core/types.js").IPythonStepOptions;
-  }
-): Promise<Step> {
-  // Extract function source
-  const extracted = extractPythonFunction(pythonData.fn);
-
-  if (!extracted) {
-    throw new Error(
-      "Failed to extract Python function source. Make sure the function is defined in a Python source file."
-    );
-  }
-
-  // Process function
-  const processed = processPythonFunction(extracted, pythonData.args, {
-    pythonVersion: pythonData.options?.pythonVersion || "3.13",
-  });
-
-  // Create new step with processed code
-  const newStep = new Step();
-
-  // Copy all step properties
-  const stepJson = step.toJSON();
-  if (stepJson.name) newStep.name(stepJson.name);
-  if (stepJson.id) newStep.id(stepJson.id);
-  if (stepJson.env) newStep.env(stepJson.env);
-  if (stepJson.if) newStep.if(stepJson.if);
-  if (stepJson["continue-on-error"]) newStep.continueOnError(stepJson["continue-on-error"]);
-  if (stepJson["timeout-minutes"]) newStep.timeoutMinutes(stepJson["timeout-minutes"]);
-  if (stepJson["working-directory"]) newStep.workingDirectory(stepJson["working-directory"]);
-
-  // Set environment variables for GitHub expression arguments
-  const envVars: Record<string, string> = { ...(stepJson.env || {}) };
-  pythonData.args.forEach((arg, index) => {
-    if (typeof arg === "string" && arg.includes("${{")) {
-      const envVarName = `GITHUB_EXPR_${index}`;
-      envVars[envVarName] = arg; // GitHub expression will be evaluated
-    }
-  });
-  if (Object.keys(envVars).length > 0) {
-    newStep.env(envVars);
-  }
-
-  // Set the run command with processed code
-  newStep.run(processed.code);
 
   return newStep;
 }

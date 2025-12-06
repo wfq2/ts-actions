@@ -33,13 +33,14 @@ export function processArguments(
       // Escape string for the target language
       if (language === "typescript") {
         return JSON.stringify(arg);
-      } else {
-        // Python
-        return JSON.stringify(arg);
       }
-    } else if (typeof arg === "number") {
+      // Python
+      return JSON.stringify(arg);
+    }
+    if (typeof arg === "number") {
       return String(arg);
-    } else if (typeof arg === "boolean") {
+    }
+    if (typeof arg === "boolean") {
       return language === "typescript" ? String(arg) : arg ? "True" : "False";
     }
 
@@ -63,10 +64,9 @@ function processGitHubExpression(
     // For TypeScript, read from environment variable
     // The expression will be evaluated by GitHub Actions and set as env var
     return `process.env.${envVarName} || ${JSON.stringify(expression)}`;
-  } else {
-    // For Python
-    return `os.environ.get(${JSON.stringify(envVarName)}, ${JSON.stringify(expression)})`;
   }
+  // For Python
+  return `os.environ.get(${JSON.stringify(envVarName)}, ${JSON.stringify(expression)})`;
 }
 
 /**
@@ -138,9 +138,9 @@ ${functionSource}
   }
 })();
 `;
-  } else {
-    // Python
-    return `
+  }
+  // Python
+  return `
 ${functionSource}
 
 # Execute the function
@@ -155,7 +155,6 @@ except Exception as e:
     traceback.print_exc()
     exit(1)
 `;
-  }
 }
 
 /**
@@ -176,5 +175,5 @@ function getFunctionIdentifier(source: string): string {
   }
 
   // Default: assume it's an anonymous function that needs to be wrapped
-  return "(function() { return " + source + "; })()";
+  return `(function() { return ${source}; })()`;
 }

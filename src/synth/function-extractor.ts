@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import * as ts from "typescript";
+import type { TypeScriptFunction } from "../core/types.js";
 
 export interface ExtractedFunction {
   source: string;
@@ -18,11 +19,11 @@ export interface ExtractedFunction {
  * @returns Extracted function information or null if extraction fails
  */
 export function extractTypeScriptFunction(
-  fn: Function,
+  fn: TypeScriptFunction,
   stackTrace?: string
 ): ExtractedFunction | null {
   try {
-    const stack = stackTrace || new Error().stack || "";
+    const stack = stackTrace || new Error("TypeScript function extraction").stack || "";
     const sourceLocation = parseStackTrace(stack);
 
     if (!sourceLocation) {
@@ -64,25 +65,13 @@ export function extractTypeScriptFunction(
 }
 
 /**
- * Extract Python function source code from source file.
- * For now, this is a placeholder - Python extraction will be implemented later.
- */
-export function extractPythonFunction(
-  _fn: Function,
-  _stackTrace?: string
-): ExtractedFunction | null {
-  // TODO: Implement Python function extraction
-  console.warn("Python function extraction not yet implemented");
-  return null;
-}
-
-/**
  * Parse stack trace to find source file and line number.
  */
 function parseStackTrace(stack: string): { filePath: string; lineNumber: number } | null {
   const lines = stack.split("\n");
 
   // Look for stack frames that reference our source files (not node_modules)
+  // Skip internal frames from Step class and workflow-processor
   for (const line of lines) {
     // Match patterns like: "    at ... (file:///path/to/file.ts:123:45)"
     // or: "    at ... (/path/to/file.ts:123:45)"
@@ -92,10 +81,13 @@ function parseStackTrace(stack: string): { filePath: string; lineNumber: number 
       const filePath = resolve(match[1]);
       const lineNumber = Number.parseInt(match[2], 10);
 
-      // Skip node_modules and dist directories
+      // Skip node_modules, dist directories, and internal files
       if (
         !filePath.includes("node_modules") &&
         !filePath.includes("dist") &&
+        !filePath.includes("src/core/step.ts") &&
+        !filePath.includes("src/synth/workflow-processor.ts") &&
+        !filePath.includes("src/synth/function-extractor.ts") &&
         existsSync(filePath)
       ) {
         return { filePath, lineNumber };
@@ -111,7 +103,7 @@ function parseStackTrace(stack: string): { filePath: string; lineNumber: number 
  */
 function findFunctionInAST(
   sourceFile: ts.SourceFile,
-  fn: Function,
+  fn: TypeScriptFunction,
   approximateLine: number
 ): ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression | null {
   const functionName = fn.name || null;
@@ -123,8 +115,9 @@ function findFunctionInAST(
     // Check if this is a function node near our target line
     const nodeStart = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
 
-    // Check if node is within reasonable distance of target line (within 50 lines)
-    const isNearTargetLine = Math.abs(nodeStart - approximateLine) < 50;
+    // Check if node is within reasonable distance of target line (within 100 lines)
+    // Increased range to handle cases where the call site is a few lines away
+    const isNearTargetLine = Math.abs(nodeStart - approximateLine) < 100;
 
     if (isNearTargetLine) {
       if (ts.isFunctionDeclaration(node)) {
@@ -133,8 +126,19 @@ function findFunctionInAST(
           return node;
         }
       } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
-        // For anonymous functions, we'll need to match by context
-        // For now, return the first arrow function/expression near the target line
+        // For arrow functions, check if they're assigned to a variable
+        // Check parent node for variable declaration
+        const parent = node.parent;
+        if (parent && ts.isVariableDeclaration(parent)) {
+          const varName = parent.name;
+          if (ts.isIdentifier(varName)) {
+            // If the function name matches the variable name, this is likely it
+            if (functionName === varName.text) {
+              return node;
+            }
+          }
+        }
+        // For anonymous functions or when name doesn't match, return the first one near target
         if (!functionName) {
           return node;
         }

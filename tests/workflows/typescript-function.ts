@@ -2,7 +2,7 @@ import { ActionsCheckout4 } from "../../.ts-actions/imports/index.js";
 import { Workflow } from "../../src/core/workflow.js";
 
 // Define a TypeScript function to execute in the workflow
-const processData = async (inputValue: string, threshold: number): Promise<void> => {
+const processData = (inputValue: string, threshold: number): void => {
   const value = Number.parseInt(inputValue, 10);
   if (value > threshold) {
     console.log(`Value ${value} exceeds threshold ${threshold}`);

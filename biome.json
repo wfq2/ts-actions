@@ -43,7 +43,7 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist"],
+    "ignore": ["node_modules", "dist", ".ts-actions"],
     "include": ["src/**/*", "tests/**/*", "*.json", "*.ts", "*.js"]
   },
   "overrides": [

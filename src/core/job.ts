@@ -57,21 +57,29 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
    * @stability stable
    */
   needs(
-    dependencies: JobId | JobId[] | string | string[] | JobOutputsRef<any> | JobOutputsRef<any>[]
+    dependencies:
+      | JobId
+      | JobId[]
+      | string
+      | string[]
+      | JobOutputsRef<Record<string, unknown>>
+      | JobOutputsRef<Record<string, unknown>>[]
   ): this {
     // Handle both JobOutputsRef and plain strings
     if (Array.isArray(dependencies)) {
       this.job.needs = dependencies.map((dep) => {
-        if (typeof dep === "string") return dep;
+        if (typeof dep === "string") {
+          return dep;
+        }
         if (dep && typeof dep === "object" && "id" in dep) {
-          return (dep as JobOutputsRef<any>).id;
+          return (dep as JobOutputsRef<Record<string, unknown>>).id;
         }
         return String(dep);
       });
     } else if (typeof dependencies === "string") {
       this.job.needs = dependencies;
     } else if (dependencies && typeof dependencies === "object" && "id" in dependencies) {
-      this.job.needs = (dependencies as JobOutputsRef<any>).id;
+      this.job.needs = (dependencies as JobOutputsRef<Record<string, unknown>>).id;
     } else {
       this.job.needs = String(dependencies);
     }

@@ -1,0 +1,105 @@
+name: TypeScript Function Test
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run TypeScript function
+        run: >-
+          // Enhanced error handling with source map support
+
+          const originalError = Error;
+
+          Error.prepareStackTrace = function(error, stack) {
+            // Try to map stack traces back to original source
+            return stack.map(frame => {
+              const fileName = frame.getFileName();
+              const lineNumber = frame.getLineNumber();
+              const columnNumber = frame.getColumnNumber();
+              const functionName = frame.getFunctionName();
+              
+              // Provide clear error context
+              return `    at ${functionName || '<anonymous>'} (${fileName}:${lineNumber}:${columnNumber})`;
+            }).join('\n');
+          };
+
+
+          try {
+            
+            // Error handling wrapper
+            const originalConsoleError = console.error;
+            console.error = function(...args) {
+              originalConsoleError.apply(console, args);
+            };
+            
+            // tests/workflows/typescript-function.ts
+            var typescript_function_default = /* @__PURE__ */ function() {
+              (inputValue, threshold) => {
+                const value = Number.parseInt(inputValue, 10);
+                if (value > threshold) {
+                  console.log(`Value ${value} exceeds threshold ${threshold}`);
+                  process.exit(1);
+                }
+                console.log(`Value ${value} is within threshold ${threshold}`);
+                process.exit(0);
+              };
+            }();
+            export {
+              typescript_function_default as default
+            };
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3R5cGVzY3JpcHQtZnVuY3Rpb24udHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihpbnB1dFZhbHVlOiBzdHJpbmcsIHRocmVzaG9sZDogbnVtYmVyKTogdm9pZCA9PiB7XG4gICAgY29uc3QgdmFsdWUgPSBOdW1iZXIucGFyc2VJbnQoaW5wdXRWYWx1ZSwgMTApO1xuICAgIGlmICh2YWx1ZSA+IHRocmVzaG9sZCkge1xuICAgICAgICBjb25zb2xlLmxvZyhgVmFsdWUgJHt2YWx1ZX0gZXhjZWVkcyB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgICAgIHByb2Nlc3MuZXhpdCgxKTtcbiAgICB9XG4gICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGlzIHdpdGhpbiB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgcHJvY2Vzcy5leGl0KDApO1xufVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoaW5wdXRWYWx1ZTogc3RyaW5nLCB0aHJlc2hvbGQ6IG51bWJlcik6IHZvaWQgPT4ge1xuICAgIGNvbnN0IHZhbHVlID0gTnVtYmVyLnBhcnNlSW50KGlucHV0VmFsdWUsIDEwKTtcbiAgICBpZiAodmFsdWUgPiB0aHJlc2hvbGQpIHtcbiAgICAgICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGV4Y2VlZHMgdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgICAgICBwcm9jZXNzLmV4aXQoMSk7XG4gICAgfVxuICAgIGNvbnNvbGUubG9nKGBWYWx1ZSAke3ZhbHVlfSBpcyB3aXRoaW4gdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgIHByb2Nlc3MuZXhpdCgwKTtcbn0gfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFjQSxJQUFPLDhCQUFTLDJCQUFXO0FBQUUsR0FBQyxZQUFvQixjQUE0QjtBQUMxRSxVQUFNLFFBQVEsT0FBTyxTQUFTLFlBQVksRUFBRTtBQUM1QyxRQUFJLFFBQVEsV0FBVztBQUNuQixjQUFRLElBQUksU0FBUyxLQUFLLHNCQUFzQixTQUFTLEVBQUU7QUFDM0QsY0FBUSxLQUFLLENBQUM7QUFBQSxJQUNsQjtBQUNBLFlBQVEsSUFBSSxTQUFTLEtBQUssd0JBQXdCLFNBQVMsRUFBRTtBQUM3RCxZQUFRLEtBQUssQ0FBQztBQUFBLEVBQ2xCO0FBQUUsRUFBRzsiLAogICJuYW1lcyI6IFtdCn0K
+            
+            
+            // Execute the function
+            (async () => {
+              try {
+                const result = await ((function() { return // Error handling wrapper
+            const originalConsoleError = console.error;
+            console.error = function(...args) {
+              originalConsoleError.apply(console, args);
+            };
+            
+            // tests/workflows/typescript-function.ts
+            var typescript_function_default = /* @__PURE__ */ function() {
+              (inputValue, threshold) => {
+                const value = Number.parseInt(inputValue, 10);
+                if (value > threshold) {
+                  console.log(`Value ${value} exceeds threshold ${threshold}`);
+                  process.exit(1);
+                }
+                console.log(`Value ${value} is within threshold ${threshold}`);
+                process.exit(0);
+              };
+            }();
+            export {
+              typescript_function_default as default
+            };
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3R5cGVzY3JpcHQtZnVuY3Rpb24udHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihpbnB1dFZhbHVlOiBzdHJpbmcsIHRocmVzaG9sZDogbnVtYmVyKTogdm9pZCA9PiB7XG4gICAgY29uc3QgdmFsdWUgPSBOdW1iZXIucGFyc2VJbnQoaW5wdXRWYWx1ZSwgMTApO1xuICAgIGlmICh2YWx1ZSA+IHRocmVzaG9sZCkge1xuICAgICAgICBjb25zb2xlLmxvZyhgVmFsdWUgJHt2YWx1ZX0gZXhjZWVkcyB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgICAgIHByb2Nlc3MuZXhpdCgxKTtcbiAgICB9XG4gICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGlzIHdpdGhpbiB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgcHJvY2Vzcy5leGl0KDApO1xufVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoaW5wdXRWYWx1ZTogc3RyaW5nLCB0aHJlc2hvbGQ6IG51bWJlcik6IHZvaWQgPT4ge1xuICAgIGNvbnN0IHZhbHVlID0gTnVtYmVyLnBhcnNlSW50KGlucHV0VmFsdWUsIDEwKTtcbiAgICBpZiAodmFsdWUgPiB0aHJlc2hvbGQpIHtcbiAgICAgICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGV4Y2VlZHMgdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgICAgICBwcm9jZXNzLmV4aXQoMSk7XG4gICAgfVxuICAgIGNvbnNvbGUubG9nKGBWYWx1ZSAke3ZhbHVlfSBpcyB3aXRoaW4gdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgIHByb2Nlc3MuZXhpdCgwKTtcbn0gfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFjQSxJQUFPLDhCQUFTLDJCQUFXO0FBQUUsR0FBQyxZQUFvQixjQUE0QjtBQUMxRSxVQUFNLFFBQVEsT0FBTyxTQUFTLFlBQVksRUFBRTtBQUM1QyxRQUFJLFFBQVEsV0FBVztBQUNuQixjQUFRLElBQUksU0FBUyxLQUFLLHNCQUFzQixTQUFTLEVBQUU7QUFDM0QsY0FBUSxLQUFLLENBQUM7QUFBQSxJQUNsQjtBQUNBLFlBQVEsSUFBSSxTQUFTLEtBQUssd0JBQXdCLFNBQVMsRUFBRTtBQUM3RCxZQUFRLEtBQUssQ0FBQztBQUFBLEVBQ2xCO0FBQUUsRUFBRzsiLAogICJuYW1lcyI6IFtdCn0K
+            ; })()("100", 50));
+                if (result !== undefined) {
+                  console.log(result);
+                }
+                process.exit(0);
+              } catch (error) {
+                console.error("Error executing function:", error);
+                if (error instanceof Error) {
+                  console.error("Stack trace:", error.stack);
+                }
+                process.exit(1);
+              }
+            })();
+
+            
+          } catch (error) {
+            console.error("Error in TypeScript function:", error.message);
+            if (error.stack) {
+              console.error("Stack trace:");
+              console.error(error.stack);
+            }
+            process.exit(1);
+          }

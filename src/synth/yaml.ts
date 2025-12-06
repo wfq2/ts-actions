@@ -13,7 +13,7 @@ import { processWorkflowSteps } from "./workflow-processor.js";
  * @jsii ignore
  */
 export async function synthesize(workflow: Workflow, outputDir = "dist"): Promise<void> {
-  // Process TypeScript/Python function steps before converting to JSON
+  // Process TypeScript function steps before converting to JSON
   await processWorkflowSteps(workflow);
 
   const config = workflow.toJSON();
@@ -52,7 +52,7 @@ export async function synthesizeMultiple(
   }
 
   for (const { workflow, filename } of workflows) {
-    // Process TypeScript/Python function steps before converting to JSON
+    // Process TypeScript function steps before converting to JSON
     await processWorkflowSteps(workflow);
 
     const config = workflow.toJSON();

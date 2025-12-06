@@ -48,54 +48,35 @@ jobs:
             console.error = function(...args) {
               originalConsoleError.apply(console, args);
             };
-            var __defProp = Object.defineProperty;
-            var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
             
-            // src/synth/function-extractor.ts
-            function extractTypeScriptFunction(fn, stackTrace) {
-              try {
-                const stack = stackTrace || new Error().stack || "";
-                const sourceLocation = parseStackTrace(stack);
-                if (!sourceLocation) {
-                  console.warn("Could not determine source location from stack trace. Function extraction may fail.");
-                  return null;
-                }
-                const { filePath, lineNumber } = sourceLocation;
-                const sourceCode = readFileSync(filePath, "utf-8");
-                const sourceFile = ts.createSourceFile(filePath, sourceCode, ts.ScriptTarget.Latest, true);
-                const functionNode = findFunctionInAST(sourceFile, fn, lineNumber);
-                if (!functionNode) {
-                  console.warn(`Could not find function definition in ${filePath} near line ${lineNumber}`);
-                  return null;
-                }
-                const source2 = extractFunctionSource(sourceFile, functionNode);
-                const startLine = sourceFile.getLineAndCharacterOfPosition(functionNode.getStart()).line + 1;
-                const endLine = sourceFile.getLineAndCharacterOfPosition(functionNode.getEnd()).line + 1;
-                return {
-                  source: source2,
-                  sourceFile: filePath,
-                  functionName: getFunctionName(functionNode),
-                  startLine,
-                  endLine
-                };
-              } catch (error) {
-                console.error("Error extracting TypeScript function:", error);
-                return null;
-              }
-            }
-            __name(extractTypeScriptFunction, "extractTypeScriptFunction");
-            var function_extractor_default = source;
+            // .github/workflows-src/test.ts
+            var test_default = /* @__PURE__ */ function() {
+              (job) => job.runsOn("ubuntu-latest").addStep(setupAndInstallNode).addStep((step) => step.name("Run tests").run("npm run test")).addStep((step) => step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!")));
+            }();
             export {
-              function_extractor_default as default,
-              extractTypeScriptFunction
+              test_default as default
             };
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsic3JjL3N5bnRoL2Z1bmN0aW9uLWV4dHJhY3Rvci50cyJdLAogICJzb3VyY2VzQ29udGVudCI6IFsiXG5cblxuLyoqXG4gKiBFeHRyYWN0IGZ1bmN0aW9uIHNvdXJjZSBjb2RlIGZyb20gVHlwZVNjcmlwdCBzb3VyY2UgZmlsZSB1c2luZyBzdGFjayB0cmFjZSBhbmQgQVNUIHBhcnNpbmcuXG4gKlxuICogQHBhcmFtIGZuIC0gVGhlIGZ1bmN0aW9uIHRvIGV4dHJhY3RcbiAqIEBwYXJhbSBzdGFja1RyYWNlIC0gT3B0aW9uYWwgc3RhY2sgdHJhY2Ugc3RyaW5nICh3aWxsIGJlIGdlbmVyYXRlZCBpZiBub3QgcHJvdmlkZWQpXG4gKiBAcmV0dXJucyBFeHRyYWN0ZWQgZnVuY3Rpb24gaW5mb3JtYXRpb24gb3IgbnVsbCBpZiBleHRyYWN0aW9uIGZhaWxzXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBleHRyYWN0VHlwZVNjcmlwdEZ1bmN0aW9uKGZuOiBGdW5jdGlvbiwgc3RhY2tUcmFjZT86IHN0cmluZyk6IEV4dHJhY3RlZEZ1bmN0aW9uIHwgbnVsbCB7XG4gICAgdHJ5IHtcbiAgICAgICAgY29uc3Qgc3RhY2sgPSBzdGFja1RyYWNlIHx8IG5ldyBFcnJvcigpLnN0YWNrIHx8IFwiXCI7XG4gICAgICAgIGNvbnN0IHNvdXJjZUxvY2F0aW9uID0gcGFyc2VTdGFja1RyYWNlKHN0YWNrKTtcbiAgICAgICAgaWYgKCFzb3VyY2VMb2NhdGlvbikge1xuICAgICAgICAgICAgY29uc29sZS53YXJuKFwiQ291bGQgbm90IGRldGVybWluZSBzb3VyY2UgbG9jYXRpb24gZnJvbSBzdGFjayB0cmFjZS4gRnVuY3Rpb24gZXh0cmFjdGlvbiBtYXkgZmFpbC5cIik7XG4gICAgICAgICAgICByZXR1cm4gbnVsbDtcbiAgICAgICAgfVxuICAgICAgICBjb25zdCB7IGZpbGVQYXRoLCBsaW5lTnVtYmVyIH0gPSBzb3VyY2VMb2NhdGlvbjtcbiAgICAgICAgY29uc3Qgc291cmNlQ29kZSA9IHJlYWRGaWxlU3luYyhmaWxlUGF0aCwgXCJ1dGYtOFwiKTtcbiAgICAgICAgLy8gRmluZCB0aGUgZnVuY3Rpb24gaW4gdGhlIEFTVFxuICAgICAgICBjb25zdCBzb3VyY2VGaWxlID0gdHMuY3JlYXRlU291cmNlRmlsZShmaWxlUGF0aCwgc291cmNlQ29kZSwgdHMuU2NyaXB0VGFyZ2V0LkxhdGVzdCwgdHJ1ZSk7XG4gICAgICAgIGNvbnN0IGZ1bmN0aW9uTm9kZSA9IGZpbmRGdW5jdGlvbkluQVNUKHNvdXJjZUZpbGUsIGZuLCBsaW5lTnVtYmVyKTtcbiAgICAgICAgaWYgKCFmdW5jdGlvbk5vZGUpIHtcbiAgICAgICAgICAgIGNvbnNvbGUud2FybihgQ291bGQgbm90IGZpbmQgZnVuY3Rpb24gZGVmaW5pdGlvbiBpbiAke2ZpbGVQYXRofSBuZWFyIGxpbmUgJHtsaW5lTnVtYmVyfWApO1xuICAgICAgICAgICAgcmV0dXJuIG51bGw7XG4gICAgICAgIH1cbiAgICAgICAgLy8gRXh0cmFjdCBmdW5jdGlvbiBzb3VyY2VcbiAgICAgICAgY29uc3Qgc291cmNlID0gZXh0cmFjdEZ1bmN0aW9uU291cmNlKHNvdXJjZUZpbGUsIGZ1bmN0aW9uTm9kZSk7XG4gICAgICAgIGNvbnN0IHN0YXJ0TGluZSA9IHNvdXJjZUZpbGUuZ2V0TGluZUFuZENoYXJhY3Rlck9mUG9zaXRpb24oZnVuY3Rpb25Ob2RlLmdldFN0YXJ0KCkpLmxpbmUgKyAxO1xuICAgICAgICBjb25zdCBlbmRMaW5lID0gc291cmNlRmlsZS5nZXRMaW5lQW5kQ2hhcmFjdGVyT2ZQb3NpdGlvbihmdW5jdGlvbk5vZGUuZ2V0RW5kKCkpLmxpbmUgKyAxO1xuICAgICAgICByZXR1cm4ge1xuICAgICAgICAgICAgc291cmNlLFxuICAgICAgICAgICAgc291cmNlRmlsZTogZmlsZVBhdGgsXG4gICAgICAgICAgICBmdW5jdGlvbk5hbWU6IGdldEZ1bmN0aW9uTmFtZShmdW5jdGlvbk5vZGUpLFxuICAgICAgICAgICAgc3RhcnRMaW5lLFxuICAgICAgICAgICAgZW5kTGluZSxcbiAgICAgICAgfTtcbiAgICB9XG4gICAgY2F0Y2ggKGVycm9yKSB7XG4gICAgICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBleHRyYWN0aW5nIFR5cGVTY3JpcHQgZnVuY3Rpb246XCIsIGVycm9yKTtcbiAgICAgICAgcmV0dXJuIG51bGw7XG4gICAgfVxufVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgc291cmNlO1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7Ozs7O0FBVU8sU0FBUywwQkFBMEIsSUFBYyxZQUErQztBQUNuRyxNQUFJO0FBQ0EsVUFBTSxRQUFRLGNBQWMsSUFBSSxNQUFNLEVBQUUsU0FBUztBQUNqRCxVQUFNLGlCQUFpQixnQkFBZ0IsS0FBSztBQUM1QyxRQUFJLENBQUMsZ0JBQWdCO0FBQ2pCLGNBQVEsS0FBSyxxRkFBcUY7QUFDbEcsYUFBTztBQUFBLElBQ1g7QUFDQSxVQUFNLEVBQUUsVUFBVSxXQUFXLElBQUk7QUFDakMsVUFBTSxhQUFhLGFBQWEsVUFBVSxPQUFPO0FBRWpELFVBQU0sYUFBYSxHQUFHLGlCQUFpQixVQUFVLFlBQVksR0FBRyxhQUFhLFFBQVEsSUFBSTtBQUN6RixVQUFNLGVBQWUsa0JBQWtCLFlBQVksSUFBSSxVQUFVO0FBQ2pFLFFBQUksQ0FBQyxjQUFjO0FBQ2YsY0FBUSxLQUFLLHlDQUF5QyxRQUFRLGNBQWMsVUFBVSxFQUFFO0FBQ3hGLGFBQU87QUFBQSxJQUNYO0FBRUEsVUFBTUEsVUFBUyxzQkFBc0IsWUFBWSxZQUFZO0FBQzdELFVBQU0sWUFBWSxXQUFXLDhCQUE4QixhQUFhLFNBQVMsQ0FBQyxFQUFFLE9BQU87QUFDM0YsVUFBTSxVQUFVLFdBQVcsOEJBQThCLGFBQWEsT0FBTyxDQUFDLEVBQUUsT0FBTztBQUN2RixXQUFPO0FBQUEsTUFDSCxRQUFBQTtBQUFBLE1BQ0EsWUFBWTtBQUFBLE1BQ1osY0FBYyxnQkFBZ0IsWUFBWTtBQUFBLE1BQzFDO0FBQUEsTUFDQTtBQUFBLElBQ0o7QUFBQSxFQUNKLFNBQ08sT0FBTztBQUNWLFlBQVEsTUFBTSx5Q0FBeUMsS0FBSztBQUM1RCxXQUFPO0FBQUEsRUFDWDtBQUNKO0FBakNnQjtBQW9DaEIsSUFBTyw2QkFBUTsiLAogICJuYW1lcyI6IFsic291cmNlIl0KfQo=
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihqb2IpID0+IGpvYlxuICAgIC5ydW5zT24oXCJ1YnVudHUtbGF0ZXN0XCIpXG4gICAgLmFkZFN0ZXAoc2V0dXBBbmRJbnN0YWxsTm9kZSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIHRlc3RzXCIpLnJ1bihcIm5wbSBydW4gdGVzdFwiKSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIFR5cGVTY3JpcHQgZnVuY3Rpb25cIikucnVuVHlwZVNjcmlwdCgoKSA9PiBjb25zb2xlLmxvZyhcIkhlbGxvLCB3b3JsZCFcIikpKVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoam9iKSA9PiBqb2JcbiAgICAucnVuc09uKFwidWJ1bnR1LWxhdGVzdFwiKVxuICAgIC5hZGRTdGVwKHNldHVwQW5kSW5zdGFsbE5vZGUpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biB0ZXN0c1wiKS5ydW4oXCJucG0gcnVuIHRlc3RcIikpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biBUeXBlU2NyaXB0IGZ1bmN0aW9uXCIpLnJ1blR5cGVTY3JpcHQoKCkgPT4gY29uc29sZS5sb2coXCJIZWxsbywgd29ybGQhXCIpKSkgfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFVQSxJQUFPLGVBQVMsMkJBQVc7QUFBRSxHQUFDLFFBQVEsSUFDakMsT0FBTyxlQUFlLEVBQ3RCLFFBQVEsbUJBQW1CLEVBQzNCLFFBQVEsQ0FBQyxTQUFTLEtBQUssS0FBSyxXQUFXLEVBQUUsSUFBSSxjQUFjLENBQUMsRUFDNUQsUUFBUSxDQUFDLFNBQVMsS0FBSyxLQUFLLHlCQUF5QixFQUFFLGNBQWMsTUFBTSxRQUFRLElBQUksZUFBZSxDQUFDLENBQUM7QUFBRSxFQUFHOyIsCiAgIm5hbWVzIjogW10KfQo=
             
             
             // Execute the function
             (async () => {
               try {
-                const result = await (extractTypeScriptFunction());
+                const result = await ((function() { return // Error handling wrapper
+            const originalConsoleError = console.error;
+            console.error = function(...args) {
+              originalConsoleError.apply(console, args);
+            };
+            
+            // .github/workflows-src/test.ts
+            var test_default = /* @__PURE__ */ function() {
+              (job) => job.runsOn("ubuntu-latest").addStep(setupAndInstallNode).addStep((step) => step.name("Run tests").run("npm run test")).addStep((step) => step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!")));
+            }();
+            export {
+              test_default as default
+            };
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihqb2IpID0+IGpvYlxuICAgIC5ydW5zT24oXCJ1YnVudHUtbGF0ZXN0XCIpXG4gICAgLmFkZFN0ZXAoc2V0dXBBbmRJbnN0YWxsTm9kZSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIHRlc3RzXCIpLnJ1bihcIm5wbSBydW4gdGVzdFwiKSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIFR5cGVTY3JpcHQgZnVuY3Rpb25cIikucnVuVHlwZVNjcmlwdCgoKSA9PiBjb25zb2xlLmxvZyhcIkhlbGxvLCB3b3JsZCFcIikpKVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoam9iKSA9PiBqb2JcbiAgICAucnVuc09uKFwidWJ1bnR1LWxhdGVzdFwiKVxuICAgIC5hZGRTdGVwKHNldHVwQW5kSW5zdGFsbE5vZGUpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biB0ZXN0c1wiKS5ydW4oXCJucG0gcnVuIHRlc3RcIikpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biBUeXBlU2NyaXB0IGZ1bmN0aW9uXCIpLnJ1blR5cGVTY3JpcHQoKCkgPT4gY29uc29sZS5sb2coXCJIZWxsbywgd29ybGQhXCIpKSkgfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFVQSxJQUFPLGVBQVMsMkJBQVc7QUFBRSxHQUFDLFFBQVEsSUFDakMsT0FBTyxlQUFlLEVBQ3RCLFFBQVEsbUJBQW1CLEVBQzNCLFFBQVEsQ0FBQyxTQUFTLEtBQUssS0FBSyxXQUFXLEVBQUUsSUFBSSxjQUFjLENBQUMsRUFDNUQsUUFBUSxDQUFDLFNBQVMsS0FBSyxLQUFLLHlCQUF5QixFQUFFLGNBQWMsTUFBTSxRQUFRLElBQUksZUFBZSxDQUFDLENBQUM7QUFBRSxFQUFHOyIsCiAgIm5hbWVzIjogW10KfQo=
+            ; })()());
                 if (result !== undefined) {
                   console.log(result);
                 }

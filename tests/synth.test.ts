@@ -10,7 +10,6 @@ import { arrayStepsWorkflow } from "./workflows/array-steps.js";
 import { invalidStep } from "./workflows/invalid-step.js";
 import { jobOutputsWorkflow } from "./workflows/job-outputs.js";
 import { nodeTestWorkflow } from "./workflows/node-test.js";
-import { pythonFunctionWorkflow } from "./workflows/python-function.js";
 import { simpleCIWorkflow } from "./workflows/simple-ci.js";
 import { simpleDeployWorkflow } from "./workflows/simple-deploy.js";
 import { typescriptFunctionWorkflow } from "./workflows/typescript-function.js";
@@ -268,27 +267,4 @@ test("synthesize workflow with TypeScript function", async () => {
     "Should contain TypeScript function step name"
   );
   ok(yamlContent.includes("run:"), "Should contain run property for TypeScript function");
-});
-
-test("synthesize workflow with Python function", async () => {
-  await synthesize(pythonFunctionWorkflow, TEST_OUTPUT_DIR);
-
-  const expectedFile = join(TEST_OUTPUT_DIR, "python-function-test.yml");
-  ok(existsSync(expectedFile), "Output file should exist");
-
-  const yamlContent = readFileSync(expectedFile, "utf-8");
-
-  // Assert key components of the YAML
-  ok(yamlContent.includes("name: Python Function Test"), "Should contain workflow name");
-  ok(yamlContent.includes("on:"), "Should contain 'on' trigger");
-  ok(yamlContent.includes("push:"), "Should contain push trigger");
-  ok(yamlContent.includes("branches:"), "Should contain branches");
-  ok(yamlContent.includes("- main"), "Should contain main branch");
-  ok(yamlContent.includes("jobs:"), "Should contain jobs");
-  ok(yamlContent.includes("test:"), "Should contain test job");
-  ok(yamlContent.includes("runs-on: ubuntu-latest"), "Should contain runs-on");
-  ok(yamlContent.includes("Checkout code"), "Should contain checkout step name");
-  ok(yamlContent.includes("actions/checkout@v4"), "Should contain checkout action");
-  ok(yamlContent.includes("Run Python function"), "Should contain Python function step name");
-  ok(yamlContent.includes("run:"), "Should contain run property for Python function");
 });

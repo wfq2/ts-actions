@@ -36,10 +36,9 @@ export async function transpileTypeScriptFunction(
   if (bundle) {
     // Use esbuild for bundling (if available) or fall back to TypeScript compiler
     return await transpileWithBundling(source, sourceFile, processedArgs, envVarCode, args);
-  } else {
-    // Simple transpilation without bundling
-    return transpileWithoutBundling(source, sourceFile, processedArgs, envVarCode, args);
   }
+  // Simple transpilation without bundling
+  return transpileWithoutBundling(source, sourceFile, processedArgs, envVarCode, args);
 }
 
 /**
@@ -207,8 +206,9 @@ ${code
 function extractImports(source: string): string[] {
   const imports: string[] = [];
   const importRegex = /import\s+(?:.+?\s+from\s+)?["']([^"']+)["']/g;
-  let match;
+  let match: RegExpExecArray | null = null;
 
+  // biome-ignore lint/suspicious/noAssignInExpressions: regex.exec() pattern is standard
   while ((match = importRegex.exec(source)) !== null) {
     imports.push(match[1]);
   }
@@ -241,5 +241,5 @@ function getFunctionIdentifierFromSource(source: string): string {
   }
 
   // Fallback: assume the function is already callable
-  return "(function() { " + source + " })()";
+  return `(function() { ${source} })()`;
 }
