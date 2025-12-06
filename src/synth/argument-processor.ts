@@ -1,5 +1,11 @@
 import type { GitHubExpression } from "../core/types.js";
 
+// Regex patterns (moved to top level for performance)
+const GITHUB_EXPRESSION_REGEX = /\$\{\{\s*[^}]+\s*\}\}/;
+const FUNCTION_DECL_REGEX = /(?:async\s+)?function\s+(\w+)/;
+const ARROW_FUNCTION_REGEX = /const\s+(\w+)\s*=\s*(?:async\s*)?\(/;
+const ENV_VAR_CLEANUP_REGEX = /[^A-Z0-9_]/g;
+
 /**
  * Checks if a value is a GitHub Actions expression string.
  */
@@ -8,7 +14,7 @@ export function isGitHubExpression(value: unknown): value is GitHubExpression {
     return false;
   }
   // Match pattern: ${{ ... }}
-  return /\$\{\{\s*[^}]+\s*\}\}/.test(value);
+  return GITHUB_EXPRESSION_REGEX.test(value);
 }
 
 /**
@@ -58,7 +64,7 @@ function processGitHubExpression(
   language: "typescript" | "python"
 ): string {
   // Generate an environment variable name from the expression
-  const envVarName = `GITHUB_EXPR_${index}`.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+  const envVarName = `GITHUB_EXPR_${index}`.toUpperCase().replace(ENV_VAR_CLEANUP_REGEX, "_");
 
   if (language === "typescript") {
     // For TypeScript, read from environment variable
@@ -86,7 +92,7 @@ export function generateEnvVarCode(
   if (language === "typescript") {
     args.forEach((arg, index) => {
       if (isGitHubExpression(arg)) {
-        const envVarName = `GITHUB_EXPR_${index}`.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+        const envVarName = `GITHUB_EXPR_${index}`.toUpperCase().replace(ENV_VAR_CLEANUP_REGEX, "_");
         // In GitHub Actions, expressions are evaluated and we can use them directly
         // But for runtime, we'll set them as environment variables
         lines.push(`const ${envVarName} = process.env.${envVarName} || ${JSON.stringify(arg)};`);
@@ -96,7 +102,7 @@ export function generateEnvVarCode(
     lines.push("import os");
     args.forEach((arg, index) => {
       if (isGitHubExpression(arg)) {
-        const envVarName = `GITHUB_EXPR_${index}`.toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+        const envVarName = `GITHUB_EXPR_${index}`.toUpperCase().replace(ENV_VAR_CLEANUP_REGEX, "_");
         lines.push(
           `${envVarName} = os.environ.get(${JSON.stringify(envVarName)}, ${JSON.stringify(arg)})`
         );
@@ -163,13 +169,13 @@ except Exception as e:
  */
 function getFunctionIdentifier(source: string): string {
   // Try to extract function name
-  const funcDeclMatch = source.match(/(?:async\s+)?function\s+(\w+)/);
+  const funcDeclMatch = source.match(FUNCTION_DECL_REGEX);
   if (funcDeclMatch) {
     return funcDeclMatch[1];
   }
 
   // Try arrow function assigned to const
-  const constMatch = source.match(/const\s+(\w+)\s*=\s*(?:async\s*)?\(/);
+  const constMatch = source.match(ARROW_FUNCTION_REGEX);
   if (constMatch) {
     return constMatch[1];
   }

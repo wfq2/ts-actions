@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noNamespaceImport: TypeScript compiler API requires namespace import
 import * as ts from "typescript";
 import type { GitHubExpression } from "../core/types.js";
 import {
@@ -6,6 +7,11 @@ import {
   processArguments,
 } from "./argument-processor.js";
 import type { ExtractedFunction } from "./function-extractor.js";
+
+// Regex patterns for function identifier extraction (moved to top level for performance)
+const FUNCTION_DECL_REGEX = /(?:export\s+)?(?:async\s+)?function\s+(\w+)/;
+const ARROW_FUNCTION_REGEX = /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(/;
+const DEFAULT_EXPORT_REGEX = /export\s+default\s+(\w+)/;
 
 export interface TranspiledResult {
   code: string;
@@ -292,20 +298,20 @@ ${bundledCode}
  */
 function getFunctionIdentifierFromSource(source: string): string {
   // Try function declaration
-  const funcDeclMatch = source.match(/(?:export\s+)?(?:async\s+)?function\s+(\w+)/);
+  const funcDeclMatch = source.match(FUNCTION_DECL_REGEX);
   if (funcDeclMatch) {
     return funcDeclMatch[1];
   }
 
   // Try const/let/var arrow function
-  const constMatch = source.match(/(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(/);
+  const constMatch = source.match(ARROW_FUNCTION_REGEX);
   if (constMatch) {
     return constMatch[1];
   }
 
   // Try default export
   if (source.includes("export default")) {
-    const defaultMatch = source.match(/export\s+default\s+(\w+)/);
+    const defaultMatch = source.match(DEFAULT_EXPORT_REGEX);
     if (defaultMatch) {
       return defaultMatch[1];
     }

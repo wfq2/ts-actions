@@ -1,7 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+// biome-ignore lint/style/noNamespaceImport: TypeScript compiler API requires namespace import
 import * as ts from "typescript";
 import type { TypeScriptFunction } from "../core/types.js";
+
+// Regex patterns for stack trace parsing (moved to top level for performance)
+const STACK_TRACE_PATTERN1 = /\(([^:]+):(\d+):\d+\)/;
+const STACK_TRACE_PATTERN2 = /([^:]+):(\d+):\d+/;
 
 export interface ExtractedFunction {
   source: string;
@@ -75,7 +80,7 @@ function parseStackTrace(stack: string): { filePath: string; lineNumber: number 
   for (const line of lines) {
     // Match patterns like: "    at ... (file:///path/to/file.ts:123:45)"
     // or: "    at ... (/path/to/file.ts:123:45)"
-    const match = line.match(/\(([^:]+):(\d+):\d+\)/) || line.match(/([^:]+):(\d+):\d+/);
+    const match = line.match(STACK_TRACE_PATTERN1) || line.match(STACK_TRACE_PATTERN2);
 
     if (match) {
       const filePath = resolve(match[1]);
@@ -100,12 +105,21 @@ function parseStackTrace(stack: string): { filePath: string; lineNumber: number 
 
 /**
  * Find function node in AST based on function reference and approximate line number.
+ * This function looks for runTypeScript calls and extracts the function argument.
  */
 function findFunctionInAST(
   sourceFile: ts.SourceFile,
   fn: TypeScriptFunction,
   approximateLine: number
 ): ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression | null {
+  // First, try to find a runTypeScript call near the target line
+  // and extract the function argument from it
+  const runTypeScriptCall = findRunTypeScriptCall(sourceFile, approximateLine);
+  if (runTypeScriptCall) {
+    return runTypeScriptCall;
+  }
+
+  // Fallback to the old method for other cases
   const functionName = fn.name || null;
 
   // Walk the AST to find matching functions
@@ -149,6 +163,51 @@ function findFunctionInAST(
   }
 
   return visit(sourceFile);
+}
+
+/**
+ * Find a runTypeScript call near the target line and return its function argument.
+ */
+function findRunTypeScriptCall(
+  sourceFile: ts.SourceFile,
+  approximateLine: number
+): ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression | null {
+  let foundCall: ts.CallExpression | null = null;
+
+  function visit(node: ts.Node): void {
+    if (ts.isCallExpression(node)) {
+      const expr = node.expression;
+      if (ts.isPropertyAccessExpression(expr) && expr.name.text === "runTypeScript") {
+        const callLine = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+        // Check if this call is near our target line (within 10 lines for precision)
+        if (Math.abs(callLine - approximateLine) < 10) {
+          foundCall = node;
+          return;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+
+  // If we found a runTypeScript call, extract the first argument (the function)
+  if (foundCall) {
+    // TypeScript needs help here - we know foundCall is CallExpression
+    const callExpr: ts.CallExpression = foundCall;
+    if (callExpr.arguments.length > 0) {
+      const arg = callExpr.arguments[0];
+      if (
+        ts.isFunctionDeclaration(arg) ||
+        ts.isArrowFunction(arg) ||
+        ts.isFunctionExpression(arg)
+      ) {
+        return arg;
+      }
+    }
+  }
+
+  return null;
 }
 
 /**

@@ -55,8 +55,8 @@ jobs:
             };
             
             // .github/workflows-src/test.ts
-            module.exports = (job) => job.runsOn("ubuntu-latest").addStep(setupAndInstallNode).addStep((step) => step.name("Run tests").run("npm run test")).addStep((step) => step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!")));
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbi8vIEV4cG9ydCB0aGUgZnVuY3Rpb25cbm1vZHVsZS5leHBvcnRzID0gKGpvYikgPT4gam9iXG4gICAgLnJ1bnNPbihcInVidW50dS1sYXRlc3RcIilcbiAgICAuYWRkU3RlcChzZXR1cEFuZEluc3RhbGxOb2RlKVxuICAgIC5hZGRTdGVwKChzdGVwKSA9PiBzdGVwLm5hbWUoXCJSdW4gdGVzdHNcIikucnVuKFwibnBtIHJ1biB0ZXN0XCIpKVxuICAgIC5hZGRTdGVwKChzdGVwKSA9PiBzdGVwLm5hbWUoXCJSdW4gVHlwZVNjcmlwdCBmdW5jdGlvblwiKS5ydW5UeXBlU2NyaXB0KCgpID0+IGNvbnNvbGUubG9nKFwiSGVsbG8sIHdvcmxkIVwiKSkpO1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7OztBQUlBLE9BQU8sVUFBVSxDQUFDLFFBQVEsSUFDckIsT0FBTyxlQUFlLEVBQ3RCLFFBQVEsbUJBQW1CLEVBQzNCLFFBQVEsQ0FBQyxTQUFTLEtBQUssS0FBSyxXQUFXLEVBQUUsSUFBSSxjQUFjLENBQUMsRUFDNUQsUUFBUSxDQUFDLFNBQVMsS0FBSyxLQUFLLHlCQUF5QixFQUFFLGNBQWMsTUFBTSxRQUFRLElBQUksZUFBZSxDQUFDLENBQUM7IiwKICAibmFtZXMiOiBbXQp9Cg==
+            module.exports = () => console.log("Hello, world!");
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbi8vIEV4cG9ydCB0aGUgZnVuY3Rpb25cbm1vZHVsZS5leHBvcnRzID0gKCkgPT4gY29uc29sZS5sb2coXCJIZWxsbywgd29ybGQhXCIpO1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7OztBQUlBLE9BQU8sVUFBVSxNQUFNLFFBQVEsSUFBSSxlQUFlOyIsCiAgIm5hbWVzIjogW10KfQo=
             
             
             // Execute the function
