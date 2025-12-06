@@ -44,6 +44,9 @@ jobs:
 
 
           try {
+            // Create module object for CommonJS compatibility
+            const module = { exports: {} };
+            const exports = module.exports;
             
             // Error handling wrapper
             const originalConsoleError = console.error;
@@ -52,33 +55,20 @@ jobs:
             };
             
             // .github/workflows-src/test.ts
-            var test_default = /* @__PURE__ */ function() {
-              (job) => job.runsOn("ubuntu-latest").addStep(setupAndInstallNode).addStep((step) => step.name("Run tests").run("npm run test")).addStep((step) => step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!")));
-            }();
-            export {
-              test_default as default
-            };
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihqb2IpID0+IGpvYlxuICAgIC5ydW5zT24oXCJ1YnVudHUtbGF0ZXN0XCIpXG4gICAgLmFkZFN0ZXAoc2V0dXBBbmRJbnN0YWxsTm9kZSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIHRlc3RzXCIpLnJ1bihcIm5wbSBydW4gdGVzdFwiKSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIFR5cGVTY3JpcHQgZnVuY3Rpb25cIikucnVuVHlwZVNjcmlwdCgoKSA9PiBjb25zb2xlLmxvZyhcIkhlbGxvLCB3b3JsZCFcIikpKVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoam9iKSA9PiBqb2JcbiAgICAucnVuc09uKFwidWJ1bnR1LWxhdGVzdFwiKVxuICAgIC5hZGRTdGVwKHNldHVwQW5kSW5zdGFsbE5vZGUpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biB0ZXN0c1wiKS5ydW4oXCJucG0gcnVuIHRlc3RcIikpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biBUeXBlU2NyaXB0IGZ1bmN0aW9uXCIpLnJ1blR5cGVTY3JpcHQoKCkgPT4gY29uc29sZS5sb2coXCJIZWxsbywgd29ybGQhXCIpKSkgfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFVQSxJQUFPLGVBQVMsMkJBQVc7QUFBRSxHQUFDLFFBQVEsSUFDakMsT0FBTyxlQUFlLEVBQ3RCLFFBQVEsbUJBQW1CLEVBQzNCLFFBQVEsQ0FBQyxTQUFTLEtBQUssS0FBSyxXQUFXLEVBQUUsSUFBSSxjQUFjLENBQUMsRUFDNUQsUUFBUSxDQUFDLFNBQVMsS0FBSyxLQUFLLHlCQUF5QixFQUFFLGNBQWMsTUFBTSxRQUFRLElBQUksZUFBZSxDQUFDLENBQUM7QUFBRSxFQUFHOyIsCiAgIm5hbWVzIjogW10KfQo=
+            module.exports = (job) => job.runsOn("ubuntu-latest").addStep(setupAndInstallNode).addStep((step) => step.name("Run tests").run("npm run test")).addStep((step) => step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!")));
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbi8vIEV4cG9ydCB0aGUgZnVuY3Rpb25cbm1vZHVsZS5leHBvcnRzID0gKGpvYikgPT4gam9iXG4gICAgLnJ1bnNPbihcInVidW50dS1sYXRlc3RcIilcbiAgICAuYWRkU3RlcChzZXR1cEFuZEluc3RhbGxOb2RlKVxuICAgIC5hZGRTdGVwKChzdGVwKSA9PiBzdGVwLm5hbWUoXCJSdW4gdGVzdHNcIikucnVuKFwibnBtIHJ1biB0ZXN0XCIpKVxuICAgIC5hZGRTdGVwKChzdGVwKSA9PiBzdGVwLm5hbWUoXCJSdW4gVHlwZVNjcmlwdCBmdW5jdGlvblwiKS5ydW5UeXBlU2NyaXB0KCgpID0+IGNvbnNvbGUubG9nKFwiSGVsbG8sIHdvcmxkIVwiKSkpO1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7OztBQUlBLE9BQU8sVUFBVSxDQUFDLFFBQVEsSUFDckIsT0FBTyxlQUFlLEVBQ3RCLFFBQVEsbUJBQW1CLEVBQzNCLFFBQVEsQ0FBQyxTQUFTLEtBQUssS0FBSyxXQUFXLEVBQUUsSUFBSSxjQUFjLENBQUMsRUFDNUQsUUFBUSxDQUFDLFNBQVMsS0FBSyxLQUFLLHlCQUF5QixFQUFFLGNBQWMsTUFBTSxRQUFRLElBQUksZUFBZSxDQUFDLENBQUM7IiwKICAibmFtZXMiOiBbXQp9Cg==
             
             
             // Execute the function
             (async () => {
               try {
-                const result = await ((function() { return // Error handling wrapper
-            const originalConsoleError = console.error;
-            console.error = function(...args) {
-              originalConsoleError.apply(console, args);
-            };
-            
-            // .github/workflows-src/test.ts
-            var test_default = /* @__PURE__ */ function() {
-              (job) => job.runsOn("ubuntu-latest").addStep(setupAndInstallNode).addStep((step) => step.name("Run tests").run("npm run test")).addStep((step) => step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!")));
-            }();
-            export {
-              test_default as default
-            };
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLmdpdGh1Yi93b3JrZmxvd3Mtc3JjL3Rlc3QudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihqb2IpID0+IGpvYlxuICAgIC5ydW5zT24oXCJ1YnVudHUtbGF0ZXN0XCIpXG4gICAgLmFkZFN0ZXAoc2V0dXBBbmRJbnN0YWxsTm9kZSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIHRlc3RzXCIpLnJ1bihcIm5wbSBydW4gdGVzdFwiKSlcbiAgICAuYWRkU3RlcCgoc3RlcCkgPT4gc3RlcC5uYW1lKFwiUnVuIFR5cGVTY3JpcHQgZnVuY3Rpb25cIikucnVuVHlwZVNjcmlwdCgoKSA9PiBjb25zb2xlLmxvZyhcIkhlbGxvLCB3b3JsZCFcIikpKVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoam9iKSA9PiBqb2JcbiAgICAucnVuc09uKFwidWJ1bnR1LWxhdGVzdFwiKVxuICAgIC5hZGRTdGVwKHNldHVwQW5kSW5zdGFsbE5vZGUpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biB0ZXN0c1wiKS5ydW4oXCJucG0gcnVuIHRlc3RcIikpXG4gICAgLmFkZFN0ZXAoKHN0ZXApID0+IHN0ZXAubmFtZShcIlJ1biBUeXBlU2NyaXB0IGZ1bmN0aW9uXCIpLnJ1blR5cGVTY3JpcHQoKCkgPT4gY29uc29sZS5sb2coXCJIZWxsbywgd29ybGQhXCIpKSkgfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFVQSxJQUFPLGVBQVMsMkJBQVc7QUFBRSxHQUFDLFFBQVEsSUFDakMsT0FBTyxlQUFlLEVBQ3RCLFFBQVEsbUJBQW1CLEVBQzNCLFFBQVEsQ0FBQyxTQUFTLEtBQUssS0FBSyxXQUFXLEVBQUUsSUFBSSxjQUFjLENBQUMsRUFDNUQsUUFBUSxDQUFDLFNBQVMsS0FBSyxLQUFLLHlCQUF5QixFQUFFLGNBQWMsTUFBTSxRQUFRLElBQUksZUFBZSxDQUFDLENBQUM7QUFBRSxFQUFHOyIsCiAgIm5hbWVzIjogW10KfQo=
-            ; })()());
+                const fn = module.exports;
+                
+                if (!fn || typeof fn !== 'function') {
+                  throw new Error('Function not found in bundle. Expected module.exports to contain a function.');
+                }
+                
+                const result = await fn();
                 if (result !== undefined) {
                   console.log(result);
                 }
@@ -91,8 +81,6 @@ jobs:
                 process.exit(1);
               }
             })();
-
-            
           } catch (error) {
             console.error("Error in TypeScript function:", error.message);
             if (error.stack) {

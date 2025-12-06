@@ -32,6 +32,9 @@ jobs:
 
 
           try {
+            // Create module object for CommonJS compatibility
+            const module = { exports: {} };
+            const exports = module.exports;
             
             // Error handling wrapper
             const originalConsoleError = console.error;
@@ -40,49 +43,28 @@ jobs:
             };
             
             // tests/workflows/typescript-function.ts
-            var typescript_function_default = /* @__PURE__ */ function() {
-              (inputValue, threshold) => {
-                const value = Number.parseInt(inputValue, 10);
-                if (value > threshold) {
-                  console.log(`Value ${value} exceeds threshold ${threshold}`);
-                  process.exit(1);
-                }
-                console.log(`Value ${value} is within threshold ${threshold}`);
-                process.exit(0);
-              };
-            }();
-            export {
-              typescript_function_default as default
+            module.exports = (inputValue, threshold) => {
+              const value = Number.parseInt(inputValue, 10);
+              if (value > threshold) {
+                console.log(`Value ${value} exceeds threshold ${threshold}`);
+                process.exit(1);
+              }
+              console.log(`Value ${value} is within threshold ${threshold}`);
+              process.exit(0);
             };
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3R5cGVzY3JpcHQtZnVuY3Rpb24udHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihpbnB1dFZhbHVlOiBzdHJpbmcsIHRocmVzaG9sZDogbnVtYmVyKTogdm9pZCA9PiB7XG4gICAgY29uc3QgdmFsdWUgPSBOdW1iZXIucGFyc2VJbnQoaW5wdXRWYWx1ZSwgMTApO1xuICAgIGlmICh2YWx1ZSA+IHRocmVzaG9sZCkge1xuICAgICAgICBjb25zb2xlLmxvZyhgVmFsdWUgJHt2YWx1ZX0gZXhjZWVkcyB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgICAgIHByb2Nlc3MuZXhpdCgxKTtcbiAgICB9XG4gICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGlzIHdpdGhpbiB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgcHJvY2Vzcy5leGl0KDApO1xufVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoaW5wdXRWYWx1ZTogc3RyaW5nLCB0aHJlc2hvbGQ6IG51bWJlcik6IHZvaWQgPT4ge1xuICAgIGNvbnN0IHZhbHVlID0gTnVtYmVyLnBhcnNlSW50KGlucHV0VmFsdWUsIDEwKTtcbiAgICBpZiAodmFsdWUgPiB0aHJlc2hvbGQpIHtcbiAgICAgICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGV4Y2VlZHMgdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgICAgICBwcm9jZXNzLmV4aXQoMSk7XG4gICAgfVxuICAgIGNvbnNvbGUubG9nKGBWYWx1ZSAke3ZhbHVlfSBpcyB3aXRoaW4gdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgIHByb2Nlc3MuZXhpdCgwKTtcbn0gfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFjQSxJQUFPLDhCQUFTLDJCQUFXO0FBQUUsR0FBQyxZQUFvQixjQUE0QjtBQUMxRSxVQUFNLFFBQVEsT0FBTyxTQUFTLFlBQVksRUFBRTtBQUM1QyxRQUFJLFFBQVEsV0FBVztBQUNuQixjQUFRLElBQUksU0FBUyxLQUFLLHNCQUFzQixTQUFTLEVBQUU7QUFDM0QsY0FBUSxLQUFLLENBQUM7QUFBQSxJQUNsQjtBQUNBLFlBQVEsSUFBSSxTQUFTLEtBQUssd0JBQXdCLFNBQVMsRUFBRTtBQUM3RCxZQUFRLEtBQUssQ0FBQztBQUFBLEVBQ2xCO0FBQUUsRUFBRzsiLAogICJuYW1lcyI6IFtdCn0K
+            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3R5cGVzY3JpcHQtZnVuY3Rpb24udHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbi8vIEV4cG9ydCB0aGUgZnVuY3Rpb25cbm1vZHVsZS5leHBvcnRzID0gKGlucHV0VmFsdWU6IHN0cmluZywgdGhyZXNob2xkOiBudW1iZXIpOiB2b2lkID0+IHtcbiAgICBjb25zdCB2YWx1ZSA9IE51bWJlci5wYXJzZUludChpbnB1dFZhbHVlLCAxMCk7XG4gICAgaWYgKHZhbHVlID4gdGhyZXNob2xkKSB7XG4gICAgICAgIGNvbnNvbGUubG9nKGBWYWx1ZSAke3ZhbHVlfSBleGNlZWRzIHRocmVzaG9sZCAke3RocmVzaG9sZH1gKTtcbiAgICAgICAgcHJvY2Vzcy5leGl0KDEpO1xuICAgIH1cbiAgICBjb25zb2xlLmxvZyhgVmFsdWUgJHt2YWx1ZX0gaXMgd2l0aGluIHRocmVzaG9sZCAke3RocmVzaG9sZH1gKTtcbiAgICBwcm9jZXNzLmV4aXQoMCk7XG59O1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7OztBQUlBLE9BQU8sVUFBVSxDQUFDLFlBQW9CLGNBQTRCO0FBQzlELFFBQU0sUUFBUSxPQUFPLFNBQVMsWUFBWSxFQUFFO0FBQzVDLE1BQUksUUFBUSxXQUFXO0FBQ25CLFlBQVEsSUFBSSxTQUFTLEtBQUssc0JBQXNCLFNBQVMsRUFBRTtBQUMzRCxZQUFRLEtBQUssQ0FBQztBQUFBLEVBQ2xCO0FBQ0EsVUFBUSxJQUFJLFNBQVMsS0FBSyx3QkFBd0IsU0FBUyxFQUFFO0FBQzdELFVBQVEsS0FBSyxDQUFDO0FBQ2xCOyIsCiAgIm5hbWVzIjogW10KfQo=
             
             
             // Execute the function
             (async () => {
               try {
-                const result = await ((function() { return // Error handling wrapper
-            const originalConsoleError = console.error;
-            console.error = function(...args) {
-              originalConsoleError.apply(console, args);
-            };
-            
-            // tests/workflows/typescript-function.ts
-            var typescript_function_default = /* @__PURE__ */ function() {
-              (inputValue, threshold) => {
-                const value = Number.parseInt(inputValue, 10);
-                if (value > threshold) {
-                  console.log(`Value ${value} exceeds threshold ${threshold}`);
-                  process.exit(1);
+                const fn = module.exports;
+                
+                if (!fn || typeof fn !== 'function') {
+                  throw new Error('Function not found in bundle. Expected module.exports to contain a function.');
                 }
-                console.log(`Value ${value} is within threshold ${threshold}`);
-                process.exit(0);
-              };
-            }();
-            export {
-              typescript_function_default as default
-            };
-            //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidGVzdHMvd29ya2Zsb3dzL3R5cGVzY3JpcHQtZnVuY3Rpb24udHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbIlxuXG5cbihpbnB1dFZhbHVlOiBzdHJpbmcsIHRocmVzaG9sZDogbnVtYmVyKTogdm9pZCA9PiB7XG4gICAgY29uc3QgdmFsdWUgPSBOdW1iZXIucGFyc2VJbnQoaW5wdXRWYWx1ZSwgMTApO1xuICAgIGlmICh2YWx1ZSA+IHRocmVzaG9sZCkge1xuICAgICAgICBjb25zb2xlLmxvZyhgVmFsdWUgJHt2YWx1ZX0gZXhjZWVkcyB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgICAgIHByb2Nlc3MuZXhpdCgxKTtcbiAgICB9XG4gICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGlzIHdpdGhpbiB0aHJlc2hvbGQgJHt0aHJlc2hvbGR9YCk7XG4gICAgcHJvY2Vzcy5leGl0KDApO1xufVxuXG4vLyBFeHBvcnQgZm9yIGV4ZWN1dGlvblxuZXhwb3J0IGRlZmF1bHQgKGZ1bmN0aW9uKCkgeyAoaW5wdXRWYWx1ZTogc3RyaW5nLCB0aHJlc2hvbGQ6IG51bWJlcik6IHZvaWQgPT4ge1xuICAgIGNvbnN0IHZhbHVlID0gTnVtYmVyLnBhcnNlSW50KGlucHV0VmFsdWUsIDEwKTtcbiAgICBpZiAodmFsdWUgPiB0aHJlc2hvbGQpIHtcbiAgICAgICAgY29uc29sZS5sb2coYFZhbHVlICR7dmFsdWV9IGV4Y2VlZHMgdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgICAgICBwcm9jZXNzLmV4aXQoMSk7XG4gICAgfVxuICAgIGNvbnNvbGUubG9nKGBWYWx1ZSAke3ZhbHVlfSBpcyB3aXRoaW4gdGhyZXNob2xkICR7dGhyZXNob2xkfWApO1xuICAgIHByb2Nlc3MuZXhpdCgwKTtcbn0gfSkoKTtcbiJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7QUFjQSxJQUFPLDhCQUFTLDJCQUFXO0FBQUUsR0FBQyxZQUFvQixjQUE0QjtBQUMxRSxVQUFNLFFBQVEsT0FBTyxTQUFTLFlBQVksRUFBRTtBQUM1QyxRQUFJLFFBQVEsV0FBVztBQUNuQixjQUFRLElBQUksU0FBUyxLQUFLLHNCQUFzQixTQUFTLEVBQUU7QUFDM0QsY0FBUSxLQUFLLENBQUM7QUFBQSxJQUNsQjtBQUNBLFlBQVEsSUFBSSxTQUFTLEtBQUssd0JBQXdCLFNBQVMsRUFBRTtBQUM3RCxZQUFRLEtBQUssQ0FBQztBQUFBLEVBQ2xCO0FBQUUsRUFBRzsiLAogICJuYW1lcyI6IFtdCn0K
-            ; })()("100", 50));
+                
+                const result = await fn("100", 50);
                 if (result !== undefined) {
                   console.log(result);
                 }
@@ -95,8 +77,6 @@ jobs:
                 process.exit(1);
               }
             })();
-
-            
           } catch (error) {
             console.error("Error in TypeScript function:", error.message);
             if (error.stack) {

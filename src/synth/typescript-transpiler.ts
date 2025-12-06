@@ -56,15 +56,35 @@ async function transpileWithBundling(
     // Dynamic import to avoid requiring esbuild as a hard dependency
     const esbuild = await import("esbuild");
 
-    // Create a temporary entry file that imports the function
-    const entryCode = `
+    // Create a temporary entry file that defines the function
+    // For IIFE format, we'll return the function from the IIFE
+    const functionIdentifier = getFunctionIdentifierFromSource(functionSource);
+
+    // Check if the function identifier is a wrapped function (fallback case for anonymous functions)
+    const isWrappedFunction = functionIdentifier.startsWith("(function()");
+
+    // Create entry code that will be bundled
+    // For CommonJS, we'll export the function via module.exports
+    let entryCode: string;
+    if (isWrappedFunction) {
+      // For anonymous functions, export the function directly
+      entryCode = `
+${envVarCode}
+
+// Export the function
+module.exports = ${functionSource};
+`;
+    } else {
+      // For named functions, include the function definition and export it
+      entryCode = `
 ${envVarCode}
 
 ${functionSource}
 
-// Export for execution
-export default ${getFunctionIdentifierFromSource(functionSource)};
+// Export function for execution
+module.exports = ${functionIdentifier};
 `;
+    }
 
     const result = await esbuild.build({
       stdin: {
@@ -74,7 +94,7 @@ export default ${getFunctionIdentifierFromSource(functionSource)};
         loader: "ts",
       },
       bundle: true,
-      format: "esm",
+      format: "cjs",
       target: "node24",
       platform: "node",
       sourcemap: "inline",
@@ -97,7 +117,13 @@ console.error = function(...args) {
     }
 
     const bundledCode = result.outputFiles[0]?.text || "";
-    const executionCode = generateFunctionCallCode(bundledCode, processedArgs, "typescript");
+    // For CommonJS format, we need to extract the exported function and call it
+    const executionCode = generateFunctionCallCodeForCJS(
+      bundledCode,
+      processedArgs,
+      functionIdentifier,
+      isWrappedFunction
+    );
 
     // Wrap in error handler with source map support
     const finalCode = wrapWithErrorHandler(executionCode, sourceFile);
@@ -214,6 +240,51 @@ function extractImports(source: string): string[] {
   }
 
   return imports;
+}
+
+/**
+ * Generate execution code for CommonJS-bundled code.
+ * CommonJS format exports via module.exports, so we need to create a module object
+ * and execute the bundled code, then access the exported function.
+ */
+function generateFunctionCallCodeForCJS(
+  bundledCode: string,
+  processedArgs: string[],
+  _functionIdentifier: string,
+  _isWrappedFunction: boolean
+): string {
+  // For CommonJS, we need to create a module object since we're running as a script
+  // The bundled code expects `module.exports` to exist
+  return `
+// Create module object for CommonJS compatibility
+const module = { exports: {} };
+const exports = module.exports;
+
+${bundledCode}
+
+// Execute the function
+(async () => {
+  try {
+    const fn = module.exports;
+    
+    if (!fn || typeof fn !== 'function') {
+      throw new Error('Function not found in bundle. Expected module.exports to contain a function.');
+    }
+    
+    const result = await fn(${processedArgs.join(", ")});
+    if (result !== undefined) {
+      console.log(result);
+    }
+    process.exit(0);
+  } catch (error) {
+    console.error("Error executing function:", error);
+    if (error instanceof Error) {
+      console.error("Stack trace:", error.stack);
+    }
+    process.exit(1);
+  }
+})();
+`.trim();
 }
 
 /**
