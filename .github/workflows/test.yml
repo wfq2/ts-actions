@@ -21,6 +21,7 @@ jobs:
         run: npm ci
       - name: Run tests
         run: npm run test
+    name: Run Test Suite
   test2:
     runs-on: ubuntu-latest
     steps:
@@ -98,4 +99,7 @@ jobs:
           }
 
           TS_ACTIONS_EOF
+    name: Run TypeScript Function Test
     needs: test
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"

@@ -37,6 +37,17 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
   }
 
   /**
+   * Sets a descriptive display name for this job.
+   *
+   * @param name - The display name for the job
+   * @stability stable
+   */
+  name(name: string): this {
+    this.job.name = name;
+    return this;
+  }
+
+  /**
    * Sets job dependencies.
    *
    * @param dependencies - Job ID(s) as strings or job reference(s) that this job depends on (created using needs())

@@ -127,6 +127,7 @@ export type JobDefaults = IJobDefaults;
 export interface IJob {
   /** @jsii ignore */
   "runs-on": Runner | Runner[];
+  name?: string;
   needs?: string | string[];
   /** @jsii ignore */
   if?: string;
