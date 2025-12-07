@@ -7,6 +7,6 @@ export const lintWorkflow = new Workflow("Lint")
   .addJob("lint", (job) =>
     job
       .runsOn("ubuntu-latest")
-      .addStep(setupAndInstallNode)
+      .addStep(...setupAndInstallNode)
       .addStep((step) => step.name("Run linting").run("npm run check"))
   );

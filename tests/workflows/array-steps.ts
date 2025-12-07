@@ -16,5 +16,5 @@ export const arrayStepsWorkflow = new Workflow("Array Steps Test")
     ];
 
     // Combine the array of steps into the job
-    return job.runsOn("ubuntu-latest").addStep(steps);
+    return job.runsOn("ubuntu-latest").addStep(...steps);
   });

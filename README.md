@@ -99,7 +99,16 @@ synthesize(workflow, "dist")
 ### Advanced Example
 
 ```typescript
-import { Workflow, Job, Step } from "ts-actions";
+import { Workflow, Job, Step, needs } from "ts-actions";
+
+const stagingJob = new Job("ubuntu-latest")
+  .runsOn("ubuntu-latest")
+  .if("github.event.inputs.environment == 'staging'")
+  .addStep((step) =>
+    step
+      .name("Deploy to staging")
+      .run("echo 'Deploying to staging'")
+  );
 
 const workflow = new Workflow("Deploy")
   .onWorkflowDispatch({
@@ -110,27 +119,19 @@ const workflow = new Workflow("Deploy")
       options: ["staging", "production"],
     },
   })
-  .addJob("deploy-staging", (job) =>
-    job
-      .runsOn("ubuntu-latest")
-      .if("github.event.inputs.environment == 'staging'")
-      .addStep((step) =>
-        step
-          .name("Deploy to staging")
-          .run("echo 'Deploying to staging'")
-      )
-  )
-  .addJob("deploy-production", (job) =>
-    job
+  .addJob("deploy-staging", stagingJob)
+  .addJob("deploy-production", (job) => {
+    const stagingRef = needs(stagingJob);
+    return job
       .runsOn("ubuntu-latest")
       .if("github.event.inputs.environment == 'production'")
-      .needs("deploy-staging")
+      .needs(stagingRef)
       .addStep((step) =>
         step
           .name("Deploy to production")
           .run("echo 'Deploying to production'")
-      )
-  );
+      );
+  });
 
 import { synthesize } from "ts-actions";
 synthesize(workflow, "dist");
@@ -157,9 +158,14 @@ const workflow = new Workflow("Workflow Name")
 Represents a GitHub Actions job.
 
 ```typescript
+const job1 = new Job("ubuntu-latest");
+const job2 = new Job("ubuntu-latest");
+const job1Ref = needs(job1);
+const job2Ref = needs(job2);
+
 const job = new Job("ubuntu-latest")
   .runsOn("ubuntu-latest")
-  .needs(["job1", "job2"])
+  .needs([job1Ref, job2Ref])
   .if("condition")
   .addStep(step => { /* ... */ })
   .env({ KEY: "value" })

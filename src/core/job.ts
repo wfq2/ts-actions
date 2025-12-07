@@ -39,49 +39,29 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
   /**
    * Sets job dependencies.
    *
-   * @param dependencies - Job reference(s) or job ID(s) that this job depends on
+   * @param dependencies - Job reference(s) that this job depends on (created using needs())
    * @stability stable
    * @jsii ignore
    */
   needs(
-    dependencies:
-      | JobOutputsRef<Record<string, unknown>>
-      | JobOutputsRef<Record<string, unknown>>[]
-      | JobId
-      | JobId[]
-  ): this;
-  /**
-   * Sets job dependencies.
-   *
-   * @param dependencies - Job reference(s) or job ID(s) that this job depends on
-   * @stability stable
-   */
-  needs(
-    dependencies:
-      | JobId
-      | JobId[]
-      | string
-      | string[]
-      | JobOutputsRef<Record<string, unknown>>
-      | JobOutputsRef<Record<string, unknown>>[]
+    dependencies: JobOutputsRef<Record<string, unknown>> | JobOutputsRef<Record<string, unknown>>[]
   ): this {
-    // Handle both JobOutputsRef and plain strings
+    // Handle JobOutputsRef (result of needs() function)
     if (Array.isArray(dependencies)) {
       this.job.needs = dependencies.map((dep) => {
-        if (typeof dep === "string") {
-          return dep;
-        }
         if (dep && typeof dep === "object" && "id" in dep) {
           return (dep as JobOutputsRef<Record<string, unknown>>).id;
         }
-        return String(dep);
+        throw new Error(
+          "needs() only accepts job references created using the needs() function. Use needs(job) to create a reference."
+        );
       });
-    } else if (typeof dependencies === "string") {
-      this.job.needs = dependencies;
     } else if (dependencies && typeof dependencies === "object" && "id" in dependencies) {
       this.job.needs = (dependencies as JobOutputsRef<Record<string, unknown>>).id;
     } else {
-      this.job.needs = String(dependencies);
+      throw new Error(
+        "needs() only accepts job references created using the needs() function. Use needs(job) to create a reference."
+      );
     }
     return this;
   }
@@ -98,43 +78,28 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
   }
 
   /**
-   * Adds a step to this job.
+   * Adds step(s) to this job.
    *
-   * @param step - A step instance
+   * @param steps - Step instance(s) or step function(s)
    * @stability stable
    */
-  addStep(step: Step): this;
-  /**
-   * Adds a step to this job.
-   *
-   * @param stepFn - A function that configures a step
-   * @stability stable
-   */
-  addStep(stepFn: (step: Step) => Step): this;
-  /**
-   * Adds multiple steps to this job.
-   *
-   * @param steps - An array of steps or step functions
-   * @stability stable
-   */
-  addStep(steps: Array<Step | ((step: Step) => Step)>): this;
-  addStep(
-    stepOrFnOrArray: Step | ((step: Step) => Step) | Array<Step | ((step: Step) => Step)>
-  ): this {
-    if (Array.isArray(stepOrFnOrArray)) {
-      for (const s of stepOrFnOrArray) {
-        if (s instanceof Step) {
-          this.stepInstances.push(s);
-        } else {
-          const stepInstance = new Step();
-          this.stepInstances.push(s(stepInstance));
-        }
+  addStep(...steps: Array<Step | ((step: Step) => Step)>): this {
+    for (const s of steps) {
+      // Handle arrays that might be passed directly (without spreading)
+      if (Array.isArray(s)) {
+        this.addStep(...s);
+        continue;
       }
-    } else if (stepOrFnOrArray instanceof Step) {
-      this.stepInstances.push(stepOrFnOrArray);
-    } else {
-      const stepInstance = new Step();
-      this.stepInstances.push(stepOrFnOrArray(stepInstance));
+      if (s instanceof Step) {
+        this.stepInstances.push(s);
+      } else if (typeof s === "function") {
+        const stepInstance = new Step();
+        this.stepInstances.push(s(stepInstance));
+      } else {
+        throw new Error(
+          `addStep expects Step instances or step functions, but received: ${typeof s}`
+        );
+      }
     }
     return this;
   }
