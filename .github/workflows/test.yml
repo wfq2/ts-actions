@@ -21,6 +21,13 @@ jobs:
         run: npm ci
       - name: Run tests
         run: npm run test
+  test2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
       - name: Run TypeScript function
         run: >-
           node << 'TS_ACTIONS_EOF'
