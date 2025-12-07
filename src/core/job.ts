@@ -39,28 +39,43 @@ export class Job<TOutputs extends Record<string, string> = Record<string, never>
   /**
    * Sets job dependencies.
    *
-   * @param dependencies - Job reference(s) that this job depends on (created using needs())
+   * @param dependencies - Job ID(s) as strings or job reference(s) that this job depends on (created using needs())
    * @stability stable
    * @jsii ignore
    */
   needs(
-    dependencies: JobOutputsRef<Record<string, unknown>> | JobOutputsRef<Record<string, unknown>>[]
+    dependencies:
+      | string
+      | string[]
+      | JobOutputsRef<Record<string, unknown>>
+      | JobOutputsRef<Record<string, unknown>>[]
   ): this {
-    // Handle JobOutputsRef (result of needs() function)
+    // Handle arrays
     if (Array.isArray(dependencies)) {
       this.job.needs = dependencies.map((dep) => {
+        // If it's a string, use it directly
+        if (typeof dep === "string") {
+          return dep;
+        }
+        // If it's a JobOutputsRef, extract the id
         if (dep && typeof dep === "object" && "id" in dep) {
           return (dep as JobOutputsRef<Record<string, unknown>>).id;
         }
         throw new Error(
-          "needs() only accepts job references created using the needs() function. Use needs(job) to create a reference."
+          "needs() only accepts job ID strings or job references created using the needs() function."
         );
       });
-    } else if (dependencies && typeof dependencies === "object" && "id" in dependencies) {
+    }
+    // Handle single string
+    else if (typeof dependencies === "string") {
+      this.job.needs = dependencies;
+    }
+    // Handle single JobOutputsRef
+    else if (dependencies && typeof dependencies === "object" && "id" in dependencies) {
       this.job.needs = (dependencies as JobOutputsRef<Record<string, unknown>>).id;
     } else {
       throw new Error(
-        "needs() only accepts job references created using the needs() function. Use needs(job) to create a reference."
+        "needs() only accepts job ID strings or job references created using the needs() function."
       );
     }
     return this;

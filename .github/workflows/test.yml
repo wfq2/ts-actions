@@ -98,3 +98,4 @@ jobs:
           }
 
           TS_ACTIONS_EOF
+    needs: test

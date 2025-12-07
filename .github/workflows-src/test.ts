@@ -12,7 +12,7 @@ export const testWorkflow = new Workflow("Test")
   )
   .addJob("test2", (job) =>
     job
-      .runsOn("ubuntu-latest")
+      .needs("test")
       .addStep((step) =>
         step.name("Run TypeScript function").runTypeScript(() => console.log("Hello, world!"))
       )
