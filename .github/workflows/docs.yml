@@ -1,0 +1,30 @@
+name: Deploy Documentation
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - requirements.txt
+  workflow_dispatch: {}
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Install MkDocs
+        run: pip install -r requirements.txt
+      - name: Deploy to GitHub Pages
+        run: mkdocs gh-deploy --force
+        if: github.ref == 'refs/heads/main'
+    name: Build and Deploy Docs
+permissions:
+  contents: write
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"

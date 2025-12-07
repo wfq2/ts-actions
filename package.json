@@ -29,7 +29,10 @@
     "check": "biome check --write .",
     "synth": "tsx src/cli/synth.ts",
     "test": "tsx tests/synth.test.ts",
-    "synth:workflows": "tsx .github/workflows-src/synth.ts"
+    "synth:workflows": "tsx .github/workflows-src/synth.ts",
+    "docs:build": "mkdocs build",
+    "docs:serve": "mkdocs serve",
+    "docs:deploy": "mkdocs gh-deploy"
   },
   "keywords": ["github-actions", "workflows", "typescript", "cdk"],
   "author": {

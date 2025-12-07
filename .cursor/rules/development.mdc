@@ -4,7 +4,7 @@ alwaysApply: true
 
 ## Development Rules
 
-## Always make sure linting succeeds.  Fix any linting errors AND warnings
+## Always make sure linting succeeds.  Fix any linting errors AND fwarnings
 ```
 npm run check
 ```
@@ -20,3 +20,5 @@ npm run test
 ```
 npm run build:python
 ```
+
+## always update the mkdocs in @docs if there are interface changes or new features
