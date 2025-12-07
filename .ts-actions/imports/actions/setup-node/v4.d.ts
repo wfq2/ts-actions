@@ -7,26 +7,26 @@
  * @see {@link https://github.com/actions/setup-node GitHub Repository}
  */
 export interface ActionsSetupNode4Inputs {
-  "always-auth"?: string;
-  "node-version"?: string;
-  "node-version-file"?: string;
-  architecture?: string;
-  "check-latest"?: boolean;
-  "registry-url"?: string;
-  scope?: string;
-  token?: string;
-  cache?: string;
-  "cache-dependency-path"?: string;
-  mirror?: string;
-  "mirror-token"?: string;
+    "always-auth"?: string;
+    "node-version"?: string;
+    "node-version-file"?: string;
+    architecture?: string;
+    "check-latest"?: boolean;
+    "registry-url"?: string;
+    scope?: string;
+    token?: string;
+    cache?: string;
+    "cache-dependency-path"?: string;
+    mirror?: string;
+    "mirror-token"?: string;
 }
 export interface ActionsSetupNode4Outputs {
-  "cache-hit": string;
-  "node-version": string;
+    "cache-hit": string;
+    "node-version": string;
 }
 export interface ActionsSetupNode4Metadata {
-  inputs: ActionsSetupNode4Inputs;
-  outputs: ActionsSetupNode4Outputs;
+    inputs: ActionsSetupNode4Inputs;
+    outputs: ActionsSetupNode4Outputs;
 }
 /**
  * Action class for actions/setup-node@v4
@@ -40,16 +40,16 @@ export interface ActionsSetupNode4Metadata {
  * @see {@link https://github.com/actions/setup-node GitHub Repository}
  */
 declare class ActionsSetupNode4Impl {
-  /**
-   * The action reference string (e.g., "actions/checkout@v4")
-   * This is a static property - access it via the class: ActionsSetupNode4.reference
-   */
-  static readonly reference: string;
-  /**
-   * Private constructor to prevent instantiation
-   * Use the class directly as a static reference
-   */
-  private constructor();
+    /**
+     * The action reference string (e.g., "actions/checkout@v4")
+     * This is a static property - access it via the class: ActionsSetupNode4.reference
+     */
+    static readonly reference: string;
+    /**
+     * Private constructor to prevent instantiation
+     * Use the class directly as a static reference
+     */
+    private constructor();
 }
 /**
  * Action class for actions/setup-node@v4
@@ -63,5 +63,6 @@ declare class ActionsSetupNode4Impl {
  * @see {@link https://github.com/actions/setup-node GitHub Repository}
  */
 export declare const ActionsSetupNode4: typeof ActionsSetupNode4Impl & {
-  readonly reference: "actions/setup-node@v4";
+    readonly reference: "actions/setup-node@v4";
 };
+export {};

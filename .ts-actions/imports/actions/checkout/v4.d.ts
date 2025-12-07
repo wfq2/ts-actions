@@ -7,34 +7,34 @@
  * @see {@link https://github.com/actions/checkout GitHub Repository}
  */
 export interface ActionsCheckout4Inputs {
-  repository?: string;
-  ref?: string;
-  token?: string;
-  "ssh-key"?: string;
-  "ssh-known-hosts"?: string;
-  "ssh-strict"?: boolean;
-  "ssh-user"?: string;
-  "persist-credentials"?: boolean;
-  path?: string;
-  clean?: boolean;
-  filter?: string;
-  "sparse-checkout"?: string;
-  "sparse-checkout-cone-mode"?: boolean;
-  "fetch-depth"?: number;
-  "fetch-tags"?: boolean;
-  "show-progress"?: boolean;
-  lfs?: boolean;
-  submodules?: boolean;
-  "set-safe-directory"?: boolean;
-  "github-server-url"?: string;
+    repository?: string;
+    ref?: string;
+    token?: string;
+    "ssh-key"?: string;
+    "ssh-known-hosts"?: string;
+    "ssh-strict"?: boolean;
+    "ssh-user"?: string;
+    "persist-credentials"?: boolean;
+    path?: string;
+    clean?: boolean;
+    filter?: string;
+    "sparse-checkout"?: string;
+    "sparse-checkout-cone-mode"?: boolean;
+    "fetch-depth"?: number;
+    "fetch-tags"?: boolean;
+    "show-progress"?: boolean;
+    lfs?: boolean;
+    submodules?: boolean;
+    "set-safe-directory"?: boolean;
+    "github-server-url"?: string;
 }
 export interface ActionsCheckout4Outputs {
-  ref: string;
-  commit: string;
+    ref: string;
+    commit: string;
 }
 export interface ActionsCheckout4Metadata {
-  inputs: ActionsCheckout4Inputs;
-  outputs: ActionsCheckout4Outputs;
+    inputs: ActionsCheckout4Inputs;
+    outputs: ActionsCheckout4Outputs;
 }
 /**
  * Action class for actions/checkout@v4
@@ -48,16 +48,16 @@ export interface ActionsCheckout4Metadata {
  * @see {@link https://github.com/actions/checkout GitHub Repository}
  */
 declare class ActionsCheckout4Impl {
-  /**
-   * The action reference string (e.g., "actions/checkout@v4")
-   * This is a static property - access it via the class: ActionsCheckout4.reference
-   */
-  static readonly reference: string;
-  /**
-   * Private constructor to prevent instantiation
-   * Use the class directly as a static reference
-   */
-  private constructor();
+    /**
+     * The action reference string (e.g., "actions/checkout@v4")
+     * This is a static property - access it via the class: ActionsCheckout4.reference
+     */
+    static readonly reference: string;
+    /**
+     * Private constructor to prevent instantiation
+     * Use the class directly as a static reference
+     */
+    private constructor();
 }
 /**
  * Action class for actions/checkout@v4
@@ -71,5 +71,6 @@ declare class ActionsCheckout4Impl {
  * @see {@link https://github.com/actions/checkout GitHub Repository}
  */
 export declare const ActionsCheckout4: typeof ActionsCheckout4Impl & {
-  readonly reference: "actions/checkout@v4";
+    readonly reference: "actions/checkout@v4";
 };
+export {};

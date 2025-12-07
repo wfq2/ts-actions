@@ -24,3 +24,5 @@ jobs:
     needs: first-job
     env:
       firstJobMessage: ${{ needs.first-job.outputs.message }}
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"

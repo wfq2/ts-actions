@@ -21,3 +21,5 @@ jobs:
         run: npm ci
       - name: Run linting
         run: npm run check
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"

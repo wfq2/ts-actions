@@ -19,3 +19,5 @@ jobs:
         run: npm run build
       - name: Run tests
         run: npm test
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"

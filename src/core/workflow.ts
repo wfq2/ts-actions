@@ -1,4 +1,5 @@
 import { Job } from "./job.js";
+import { defaultRunName } from "./run-name-helpers.js";
 import type {
   IJobDefaults,
   IPullRequestTriggerOptions,
@@ -229,6 +230,10 @@ export class Workflow {
       jobs[jobId] = job.toJSON();
     }
     this.config.jobs = jobs;
+    // Set default run name if not explicitly set
+    if (!this.config["run-name"]) {
+      this.config["run-name"] = defaultRunName();
+    }
     return { ...this.config };
   }
 }

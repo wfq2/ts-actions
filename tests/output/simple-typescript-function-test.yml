@@ -83,3 +83,5 @@ jobs:
           }
 
           TS_ACTIONS_EOF
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"

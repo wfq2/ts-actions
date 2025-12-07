@@ -7,3 +7,5 @@ jobs:
     steps:
       - name: Deploy
         run: echo 'Deploying application'
+run-name: "${{ github.workflow }}: ${{ github.event.head_commit.message }} by
+  @${{ github.actor }}"
